@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # _*_coding:utf-8_*_
 
-import urllib
-import urllib2
-import cookielib
+import urllib.request, urllib.parse, urllib.error
+import urllib.request, urllib.error, urllib.parse
+import http.cookiejar
 import re
 import time
 from email import encoders
@@ -17,19 +17,18 @@ import smtplib
 class NWPUgrade:
     def __init__(self):
         try:
-            self.values = {}
-            self.values['username'] = username
-            self.values['password'] = password
+            self.values = {'username': username, 'password': password}
             self.loginUrl = "http://us.nwpu.edu.cn/eams/login.action"
-            self.gradeUrl = "http://us.nwpu.edu.cn/eams/teach/grade/course/person!historyCourseGrade.action?projectType=MAJOR"
+            self.gradeUrl = "http://us.nwpu.edu.cn/eams/teach/grade/course/person!historyCourseGrade.action" \
+                            "?projectType=MAJOR "
             self.message = ''
-            self.cookie = cookielib.CookieJar()
-            self.handler = urllib2.HTTPCookieProcessor(self.cookie)
-            self.opener = urllib2.build_opener(self.handler)
-            self.data = urllib.urlencode(self.values)
+            self.cookie = http.cookiejar.CookieJar()
+            self.handler = urllib.request.HTTPCookieProcessor(self.cookie)
+            self.opener = urllib.request.build_opener(self.handler)
+            self.data = urllib.parse.urlencode(self.values)
             self.grades = {}
         except:
-            print 'ERROR1'
+            print('ERROR1')
 
     def login(self):
         try:
@@ -38,7 +37,7 @@ class NWPUgrade:
             content = result.read().decode('UTF-8')
             return content
         except:
-            print 'ERROR2'
+            print('ERROR2')
 
     def grade(self):
         try:
@@ -48,43 +47,42 @@ class NWPUgrade:
                 re.S)
             self.grades = re.findall(pattern, content)
         except:
-            print 'ERROR3'
+            print('ERROR3')
 
     def printgrade(self):
         try:
             mark = 0
             credit = 0
             for grade in self.grades:
-                print grade[0]  # 学期
-                print grade[1]  # 课程名称
-                print u'学分：', grade[2]  # 学分
-                print u'最终成绩：', grade[3]  # 成绩
+                print(grade[0])  # 学期
+                print(grade[1])  # 课程名称
+                print('学分：', grade[2])  # 学分
+                print('最终成绩：', grade[3])  # 成绩
                 if grade[3] != 'P':
                     mark += float(grade[3]) * float(grade[2])
                     credit += float(grade[2])
-            print u'你的学分绩', mark / credit
+            print('你的学分绩', mark / credit)
         except:
-            print 'ERROR4'
+            print('ERROR4')
 
     def getgrades(self):
         try:
             return self.grades
         except:
-            print 'ERROR5'
+            print('ERROR5')
 
 
 def _format_addr(s):
     name, addr = parseaddr(s)
     return formataddr(( \
-        Header(name, 'utf-8').encode(), \
-        addr.encode('utf-8') if isinstance(addr, unicode) else addr))
+        Header(name, 'utf-8').encode(), addr.encode('utf-8') if isinstance(addr, str) else addr))
 
 
 def sendemail(text):
     msg = MIMEText(text, 'plain', 'utf-8')
-    msg['From'] = _format_addr(u'Python <%s>' % from_addr)
-    msg['To'] = _format_addr(u'管理员 <%s>' % to_addr)
-    msg['Subject'] = Header(u'您的成绩单', 'utf-8').encode()
+    msg['From'] = _format_addr('Python <%s>' % from_addr)
+    msg['To'] = _format_addr('管理员 <%s>' % to_addr)
+    msg['Subject'] = Header('您的成绩单', 'utf-8').encode()
     server = smtplib.SMTP_SSL(smtp_server, 465)
     server.set_debuglevel(1)
     server.login(from_addr, smtp_password)
@@ -119,8 +117,8 @@ def main():
                 grades = Newgrades
                 text = ''
                 for grade in Newgrade:
-                    text = text + u"学期：%s  \n课程名称：%s  \n学分：%s  \n成绩：%s  \n" % (grade[0], grade[1], grade[2], grade[3])
-                text = text + u'学分绩：%f' % GPA
+                    text = text + "学期：%s  \n课程名称：%s  \n学分：%s  \n成绩：%s  \n" % (grade[0], grade[1], grade[2], grade[3])
+                text = text + '学分绩：%f' % GPA
                 sendemail(text)
         except:
             continue
