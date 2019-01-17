@@ -5,12 +5,25 @@ import http.cookiejar
 import urllib.error
 import urllib.parse
 import urllib.request
+# noinspection PyUnresolvedReferences
 from lxml import cssselect, etree
+
+try:
+    import config
+except ImportError:
+    pass
+
+
+def get_config(name: str):
+    if 'config' in globals() and hasattr(config, name):
+        return getattr(config, name)
+
+    return input(name + ': ')
 
 
 class NWPUgrade:
     def __init__(self):
-        self.values = {'username': input('username: '), 'password': input('password: ')}
+        self.values = {'username': get_config('username'), 'password': get_config('password')}
         self.loginUrl = "http://us.nwpu.edu.cn/eams/login.action"
         self.gradeUrl = "http://us.nwpu.edu.cn/eams/teach/grade/course/person!historyCourseGrade.action" \
                         "?projectType=MAJOR "
@@ -31,13 +44,15 @@ class NWPUgrade:
         tree = etree.HTML(content)
         trs = tree.cssselect("div.grid table tbody tr")
 
-        self.grades = [(tr[0].text, tr[3][0].text, tr[5].text, tr[10].text, tr[11].text) for tr in trs]
+        self.grades = [(tr[0].text, tr[3][0].text, tr[5].text.strip(), tr[10].text.strip(), tr[11].text.strip()) for tr
+                       in trs]
         self.printgrade()
 
     def printgrade(self):
         mark = 0
         credit = 0
         for grade in self.grades:
+            print()
             print(grade[0])  # 学期
             print(grade[1])  # 课程名称
             print('学分：', grade[2])  # 学分
@@ -45,6 +60,7 @@ class NWPUgrade:
             if grade[3].strip() != 'P':
                 mark += float(grade[3]) * float(grade[2])
                 credit += float(grade[2])
+        print()
         print('你的学分绩', mark / credit)
 
 
