@@ -5,6 +5,7 @@ import http.cookiejar
 import urllib.error
 import urllib.parse
 import urllib.request
+import getpass
 # noinspection PyUnresolvedReferences
 from lxml import cssselect, etree
 
@@ -14,16 +15,19 @@ except ImportError:
     pass
 
 
-def get_config(name: str):
+def get_config(name: str, passwd=False):
     if 'config' in globals() and hasattr(config, name):
         return getattr(config, name)
 
-    return input(name + ': ')
+    prompt = name + ': '
+    if passwd:
+        return getpass.getpass(prompt)
+    return input(prompt)
 
 
 class NWPUgrade:
     def __init__(self):
-        self.values = {'username': get_config('username'), 'password': get_config('password')}
+        self.values = {'username': get_config('username'), 'password': get_config('password', passwd=True)}
         self.loginUrl = "http://us.nwpu.edu.cn/eams/login.action"
         self.gradeUrl = "http://us.nwpu.edu.cn/eams/teach/grade/course/person!historyCourseGrade.action" \
                         "?projectType=MAJOR "
