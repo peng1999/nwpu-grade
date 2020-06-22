@@ -55,17 +55,33 @@ class NWPUgrade:
     def printgrade(self):
         mark = 0
         credit = 0
+        years = []
+        mark_by_year = {}
+        credit_by_year = {}
         for grade in self.grades:
             print()
             print(grade[0])  # 学期
             print(grade[1])  # 课程名称
             print('学分：', grade[2])  # 学分
             print('最终成绩：', grade[3])  # 成绩
-            if grade[3].strip() != 'P':
+            if grade[3].strip() not in ['P', 'A', 'B']:
                 mark += float(grade[3]) * float(grade[2])
                 credit += float(grade[2])
+
+                year = grade[0].split()[0]
+                if year not in mark_by_year:
+                    years.append(year)
+                    mark_by_year[year] = 0
+                    credit_by_year[year] = 0
+                mark_by_year[year] += float(grade[3]) * float(grade[2])
+                credit_by_year[year] += float(grade[2])
+
         print()
-        print('你的学分绩', mark / credit)
+        for year in years:
+            print(year, '学年学分绩', mark_by_year[year] / credit_by_year[year])
+
+        print()
+        print('你的总学分绩', mark / credit)
 
 
 NWPU = NWPUgrade()

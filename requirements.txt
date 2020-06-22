@@ -1,2 +1,2 @@
-lxml
-
+cssselect==1.0.3
+lxml==4.3.1
