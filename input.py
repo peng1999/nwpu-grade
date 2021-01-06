@@ -48,7 +48,7 @@ class NWPUgrade:
         tree = etree.HTML(content)
         trs = tree.cssselect("div.grid table tbody tr")
 
-        self.grades = [(tr[0].text, tr[3][0].text, tr[5].text.strip(), tr[10].text.strip(), tr[11].text.strip()) for tr
+        self.grades = [(tr[0].text, tr[3][0].text, tr[5].text, tr[10].text, tr[11].text) for tr
                        in trs]
         self.printgrade()
 
@@ -64,7 +64,7 @@ class NWPUgrade:
             print(grade[1])  # 课程名称
             print('学分：', grade[2])  # 学分
             print('最终成绩：', grade[3])  # 成绩
-            if grade[3].strip() not in ['P', 'A', 'B']:
+            try:
                 mark += float(grade[3]) * float(grade[2])
                 credit += float(grade[2])
 
@@ -75,13 +75,16 @@ class NWPUgrade:
                     credit_by_year[year] = 0
                 mark_by_year[year] += float(grade[3]) * float(grade[2])
                 credit_by_year[year] += float(grade[2])
+            except ValueError:
+                pass
 
         print()
         for year in years:
             print(year, '学年学分绩', mark_by_year[year] / credit_by_year[year])
 
         print()
-        print('你的总学分绩', mark / credit)
+        if credit != 0:
+            print('你的总学分绩', mark / credit)
 
 
 NWPU = NWPUgrade()
