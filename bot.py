@@ -102,6 +102,9 @@ def query_diff():
 def listen_loop(chat_id: int):
     wait_time = 60 * 60
     while not stop_flag.wait(timeout=wait_time):
+        # everyone is sleeping during this time, so don't update
+        if 3 <= datetime.now().hour < 7:
+            continue
         diff = query_diff()
         if len(diff) > 0:
             updater.bot.send_message(chat_id, 'New updates!')
