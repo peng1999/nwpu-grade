@@ -50,7 +50,6 @@ class NWPUgrade:
 
         self.grades = [(tr[0].text, tr[3][0].text, tr[5].text, tr[10].text, tr[11].text) for tr
                        in trs]
-        self.printgrade()
 
     def printgrade(self):
         mark = 0
@@ -87,5 +86,7 @@ class NWPUgrade:
             print('你的总学分绩', mark / credit)
 
 
-NWPU = NWPUgrade()
-NWPU.grade()
+if __name__ == "__main__":
+    NWPU = NWPUgrade()
+    NWPU.grade()
+    NWPU.printgrade()
