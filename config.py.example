@@ -3,3 +3,4 @@ password = "xxxxxxxxxx"  # password:密码
 
 token = "Telegram Bot Token"
 allow_user = "username or user_id"
+data_path = "data/path"
