@@ -1,7 +1,7 @@
 import json
 import logging
 from datetime import datetime
-from typing import Union, List
+from typing import List
 
 from pydantic import BaseModel, Field
 
@@ -27,3 +27,10 @@ class GradeData(BaseModel):
         logging.info(f'write data to {filename}')
         with open(filename, 'w') as f:
             f.write(self.json())
+
+    def diff(self, old: 'GradeData'):
+        id_score_pairs = [(course.course_id, course.score) for course in old.courses]
+        return [
+            course for course in self.courses
+            if (course.course_id, course.score) not in id_score_pairs
+        ]

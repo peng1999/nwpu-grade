@@ -8,7 +8,7 @@ import urllib.request
 import getpass
 from typing import List
 
-from lxml import cssselect, etree
+from lxml import etree
 
 from data import Course
 
@@ -29,8 +29,6 @@ def get_config(name: str, passwd=False):
 
 
 class NWPUgrade:
-    grades: List[Course]
-
     def __init__(self):
         self.values = {'username': get_config('username'), 'password': get_config('password', passwd=True)}
         self.loginUrl = "http://us.nwpu.edu.cn/eams/login.action"
@@ -40,6 +38,7 @@ class NWPUgrade:
         self.handler = urllib.request.HTTPCookieProcessor(self.cookie)
         self.opener = urllib.request.build_opener(self.handler)
         self.data = urllib.parse.urlencode(self.values)
+        self.grades: List[Course] = []
 
     def login(self):
         self.opener.open(self.loginUrl, self.data.encode('UTF-8'))

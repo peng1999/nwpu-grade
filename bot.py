@@ -1,15 +1,17 @@
+import logging
 import os
+import threading
 from datetime import datetime, timedelta
 from functools import wraps
 from io import StringIO
-import logging
+from typing import List
 
-from telegram.update import Update
 from telegram.ext import Updater, CallbackContext, CommandHandler
+from telegram.update import Update
 
 import config
 from client import NWPUgrade
-from data import GradeData
+from data import GradeData, Course
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -38,7 +40,16 @@ except AttributeError:
 GRADE_DATA_FILE = os.path.join(GRADE_DATA_PATH, 'data.json')
 
 updater = Updater(token=config.token, use_context=True)
-dispatcher = updater.dispatcher
+stop_flag = threading.Event()  # background thread is running when not set
+stop_flag.set()
+
+
+def print_courses(courses: List[Course]):
+    nwpu_client = NWPUgrade()
+    nwpu_client.grades = courses
+    with StringIO() as sio:
+        nwpu_client.printgrade(file=sio)
+        return sio.getvalue()
 
 
 @restricted
@@ -55,24 +66,78 @@ def start(update: Update, context: CallbackContext):
 def query(update: Update, context: CallbackContext):
     logging.info(f'/query from user {update.effective_user.id}')
 
-    grade_data = GradeData.load(GRADE_DATA_FILE)
+    try:
+        # If there exists cached data within 1 hour, use it
+        grade_data = GradeData.load(GRADE_DATA_FILE)
+        if datetime.now() - grade_data.time > timedelta(hours=1):
+            raise FileNotFoundError
+
+    except FileNotFoundError:
+        # If not, access server to update it
+        nwpu_client = NWPUgrade()
+        nwpu_client.grade()
+        grade_data = GradeData(courses=nwpu_client.grades)
+        grade_data.save(GRADE_DATA_FILE)
+
+    text = print_courses(grade_data.courses)
+    update.effective_chat.send_message(text)
+
+
+def query_diff():
+    logging.info('querying diff')
+
+    try:
+        grade_data = GradeData.load(GRADE_DATA_FILE)
+    except FileNotFoundError:
+        return []
 
     nwpu_client = NWPUgrade()
-    if datetime.now() - grade_data.time < timedelta(hours=1):
-        nwpu_client.grades = grade_data.courses
-    else:
-        nwpu_client.grade()
-
-    with StringIO() as sio:
-        nwpu_client.printgrade(file=sio)
-        update.effective_chat.send_message(sio.getvalue())
-
+    nwpu_client.grade()
     new_grade_data = GradeData(courses=nwpu_client.grades)
     new_grade_data.save(GRADE_DATA_FILE)
 
+    return new_grade_data.diff(grade_data)
 
+
+def listen_loop(chat_id: int):
+    wait_time = 60 * 60
+    while not stop_flag.wait(timeout=wait_time):
+        diff = query_diff()
+        if len(diff) > 0:
+            updater.bot.send_message(chat_id, 'New updates!')
+            text = print_courses(diff)
+            updater.bot.send_message(chat_id, text)
+    logging.info('background thread stopped')
+
+
+@restricted
+def start_listen(update: Update, context: CallbackContext):
+    if not stop_flag.is_set():
+        update.effective_chat.send_message('Already started!')
+        return
+    stop_flag.clear()
+
+    background_thread = threading.Thread(name='background', target=listen_loop,
+                                         args=(update.effective_chat.id,))
+    background_thread.daemon = True
+    background_thread.start()
+    logging.info('background thread started')
+
+
+@restricted
+def stop_listen(update: Update, context: CallbackContext):
+    if stop_flag.is_set():
+        update.effective_chat.send_message('Already stopped!')
+        return
+    logging.info('stopping background thread...')
+    stop_flag.set()
+
+
+dispatcher = updater.dispatcher
 dispatcher.add_handler(CommandHandler('start', start))
 dispatcher.add_handler(CommandHandler('query', query))
+dispatcher.add_handler(CommandHandler('start_listen', start_listen))
+dispatcher.add_handler(CommandHandler('stop_listen', stop_listen))
 updater.start_polling()
 
 updater.idle()
