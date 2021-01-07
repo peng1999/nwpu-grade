@@ -1,6 +1,6 @@
-username = "xxxxxxxxxx"  # username:学号
-password = "xxxxxxxxxx"  # password:密码
+username = "xxxxxxxxxx"  # [用作命令行时可选] 学号
+password = "xxxxxxxxxx"  # [用作命令行时可选] 密码
 
-token = "Telegram Bot Token"
+token = "Telegram Bot Token"  # 访问 https://t.me/BotFather 以获取
 allow_user = "username or user_id"
-data_path = "data/path"
+data_path = "."  # [可选] 临时文件的储存位置，默认为当前目录
