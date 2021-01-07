@@ -1,12 +1,12 @@
 #!/usr/bin/python3
-# _*_coding:utf-8_*_
 
+import sys
 import http.cookiejar
 import urllib.error
 import urllib.parse
 import urllib.request
 import getpass
-# noinspection PyUnresolvedReferences
+
 from lxml import cssselect, etree
 
 try:
@@ -48,21 +48,24 @@ class NWPUgrade:
         tree = etree.HTML(content)
         trs = tree.cssselect("div.grid table tbody tr")
 
-        self.grades = [(tr[0].text, tr[3][0].text, tr[5].text, tr[10].text, tr[11].text) for tr
-                       in trs]
+        self.grades = [(tr[0].text, tr[3][0].text, tr[5].text, tr[10].text.strip())
+                       for tr in trs]
 
-    def printgrade(self):
+    def printgrade(self, *, file=sys.stdout):
+        def print_to_file(*args):
+            print(*args, file=file)
+
         mark = 0
         credit = 0
         years = []
         mark_by_year = {}
         credit_by_year = {}
         for grade in self.grades:
-            print()
-            print(grade[0])  # 学期
-            print(grade[1])  # 课程名称
-            print('学分：', grade[2])  # 学分
-            print('最终成绩：', grade[3])  # 成绩
+            print_to_file()
+            print_to_file(grade[0])  # 学期
+            print_to_file(grade[1])  # 课程名称
+            print_to_file('学分：', grade[2])  # 学分
+            print_to_file('最终成绩：', grade[3])  # 成绩
             try:
                 mark += float(grade[3]) * float(grade[2])
                 credit += float(grade[2])
@@ -77,13 +80,13 @@ class NWPUgrade:
             except ValueError:
                 pass
 
-        print()
+        print_to_file()
         for year in years:
-            print(year, '学年学分绩', mark_by_year[year] / credit_by_year[year])
+            print_to_file(year, '学年学分绩', mark_by_year[year] / credit_by_year[year])
 
-        print()
+        print_to_file()
         if credit != 0:
-            print('你的总学分绩', mark / credit)
+            print_to_file('你的总学分绩', mark / credit)
 
 
 if __name__ == "__main__":
