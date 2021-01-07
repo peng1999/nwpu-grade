@@ -6,7 +6,8 @@ from functools import wraps
 from io import StringIO
 from typing import List
 
-from telegram.ext import Updater, CallbackContext, CommandHandler
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Updater, CallbackContext, CommandHandler, CallbackQueryHandler
 from telegram.update import Update
 
 import config
@@ -31,6 +32,15 @@ def restricted(func):
         return func(update, context, *args, **kwargs)
 
     return wrapped
+
+
+def build_menu(buttons, n_cols, header_buttons=None, footer_buttons=None):
+    menu = [buttons[i:i + n_cols] for i in range(0, len(buttons), n_cols)]
+    if header_buttons:
+        menu.insert(0, [header_buttons])
+    if footer_buttons:
+        menu.append([footer_buttons])
+    return menu
 
 
 try:
@@ -79,8 +89,27 @@ def query(update: Update, context: CallbackContext):
         grade_data = GradeData(courses=nwpu_client.grades)
         grade_data.save(GRADE_DATA_FILE)
 
+    semester = grade_data.semesters()
+    button_list = [InlineKeyboardButton(s, callback_data=s) for s in semester]
+    button_list.append(InlineKeyboardButton('全部', callback_data='all'))
+    markup = InlineKeyboardMarkup(build_menu(button_list, 2))
+
     text = print_courses(grade_data.courses)
-    update.effective_chat.send_message(text)
+    update.message.reply_text(text, reply_markup=markup)
+    # update.effective_chat.send_message(text)
+
+
+def button(update: Update, context: CallbackContext):
+    q = update.callback_query
+    logging.info(f'button clicked with data=`{q.data}`')
+    grade_data = GradeData.load(GRADE_DATA_FILE)
+    if q.data == 'all':
+        courses = grade_data.courses
+    else:
+        courses = grade_data.courses_by_semester(q.data)
+    text = print_courses(courses)
+    q.answer()
+    q.edit_message_text(text, reply_markup=update.effective_message.reply_markup)
 
 
 def query_diff():
@@ -139,6 +168,7 @@ def stop_listen(update: Update, context: CallbackContext):
 dispatcher = updater.dispatcher
 dispatcher.add_handler(CommandHandler('start', start))
 dispatcher.add_handler(CommandHandler('query', query))
+dispatcher.add_handler(CallbackQueryHandler(button))
 dispatcher.add_handler(CommandHandler('start_listen', start_listen))
 dispatcher.add_handler(CommandHandler('stop_listen', stop_listen))
 updater.start_polling()

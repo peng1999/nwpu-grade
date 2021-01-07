@@ -34,3 +34,13 @@ class GradeData(BaseModel):
             course for course in self.courses
             if (course.course_id, course.score) not in id_score_pairs
         ]
+
+    def semesters(self):
+        s: List[str] = []
+        for course in self.courses:
+            if course.semester not in s:
+                s.append(course.semester)
+        return s
+
+    def courses_by_semester(self, semester):
+        return [course for course in self.courses if course.semester == semester]
