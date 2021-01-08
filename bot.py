@@ -139,6 +139,7 @@ def listen_loop(chat_id: int):
             updater.bot.send_message(chat_id, 'New updates!')
             text = print_courses(diff)
             updater.bot.send_message(chat_id, text)
+    updater.bot.send_message(chat_id, 'Monitor stopped!')
     logging.info('background thread stopped')
 
 
@@ -153,6 +154,7 @@ def start_listen(update: Update, context: CallbackContext):
                                          args=(update.effective_chat.id,))
     background_thread.daemon = True
     background_thread.start()
+    update.effective_chat.send_message('Started monitor grade change!')
     logging.info('background thread started')
 
 
