@@ -109,7 +109,9 @@ def button(update: Update, context: CallbackContext):
         courses = grade_data.courses_by_semester(q.data)
     text = print_courses(courses)
     q.answer()
-    q.edit_message_text(text, reply_markup=update.effective_message.reply_markup)
+    # bypass the exception raised when text not change
+    if text.strip() != update.effective_message.text.strip():
+        q.edit_message_text(text, reply_markup=update.effective_message.reply_markup)
 
 
 def query_diff():
