@@ -63,7 +63,7 @@ class NWPUgrade:
             for tr in trs
         ]
 
-    def printgrade(self, *, file=sys.stdout):
+    def printgrade(self, *, file=sys.stdout, avg_all=True, avg_by_year=True):
         def print_to_file(*args):
             print(*args, file=file)
 
@@ -92,13 +92,15 @@ class NWPUgrade:
             except ValueError:
                 pass
 
-        print_to_file()
-        for year in years:
-            print_to_file(year, '学年学分绩', mark_by_year[year] / credit_by_year[year])
+        if avg_by_year:
+            print_to_file()
+            for year in years:
+                print_to_file(year, '学年学分绩', mark_by_year[year] / credit_by_year[year])
 
-        print_to_file()
-        if credit != 0:
-            print_to_file('你的总学分绩', mark / credit)
+        if avg_all:
+            print_to_file()
+            if credit != 0:
+                print_to_file('总学分绩', mark / credit)
 
 
 if __name__ == "__main__":

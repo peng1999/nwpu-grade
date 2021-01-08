@@ -54,11 +54,11 @@ stop_flag = threading.Event()  # background thread is running when not set
 stop_flag.set()
 
 
-def print_courses(courses: List[Course]):
+def print_courses(courses: List[Course], **kwargs):
     nwpu_client = NWPUgrade()
     nwpu_client.grades = courses
     with StringIO() as sio:
-        nwpu_client.printgrade(file=sio)
+        nwpu_client.printgrade(file=sio, **kwargs)
         return sio.getvalue()
 
 
@@ -107,7 +107,7 @@ def button(update: Update, context: CallbackContext):
         courses = grade_data.courses
     else:
         courses = grade_data.courses_by_semester(q.data)
-    text = print_courses(courses)
+    text = print_courses(courses, avg_by_year=False)
     q.answer()
     # bypass the exception raised when text not change
     if text.strip() != update.effective_message.text.strip():
@@ -139,7 +139,7 @@ def listen_loop(chat_id: int):
         diff = query_diff()
         if len(diff) > 0:
             updater.bot.send_message(chat_id, 'New updates!')
-            text = print_courses(diff)
+            text = print_courses(diff, avg_all=False, avg_by_year=False)
             updater.bot.send_message(chat_id, text)
     updater.bot.send_message(chat_id, 'Monitor stopped!')
     logging.info('background thread stopped')
