@@ -146,7 +146,7 @@ def listen_loop(chat_id: int):
 
 
 @restricted
-def start_listen(update: Update, context: CallbackContext):
+def start_monitor(update: Update, context: CallbackContext):
     if not stop_flag.is_set():
         update.effective_chat.send_message('Already started!')
         return
@@ -161,7 +161,7 @@ def start_listen(update: Update, context: CallbackContext):
 
 
 @restricted
-def stop_listen(update: Update, context: CallbackContext):
+def stop_monitor(update: Update, context: CallbackContext):
     if stop_flag.is_set():
         update.effective_chat.send_message('Already stopped!')
         return
@@ -169,12 +169,23 @@ def stop_listen(update: Update, context: CallbackContext):
     stop_flag.set()
 
 
+def help_text(update: Update, context: CallbackContext):
+    update.effective_chat.send_message("""
+/start - 开始
+/query - 查询所有成绩
+/start_monitor - 开始监视成绩
+/stop_monitor - 停止监视成绩
+/help - 显示帮助信息
+    """)
+
+
 dispatcher = updater.dispatcher
 dispatcher.add_handler(CommandHandler('start', start))
 dispatcher.add_handler(CommandHandler('query', query))
 dispatcher.add_handler(CallbackQueryHandler(button))
-dispatcher.add_handler(CommandHandler('start_listen', start_listen))
-dispatcher.add_handler(CommandHandler('stop_listen', stop_listen))
+dispatcher.add_handler(CommandHandler('start_monitor', start_monitor))
+dispatcher.add_handler(CommandHandler('stop_monitor', stop_monitor))
+dispatcher.add_handler(CommandHandler('help', help_text))
 updater.start_polling()
 
 updater.idle()
