@@ -23,7 +23,7 @@ def restricted(func):
     def wrapped(update: Update, context, *args, **kwargs):
         user_id = update.effective_user.id
         username = update.effective_user.username
-        if user_id != config.allow_user and username != config.allow_user:
+        if int(user_id) != config.allow_user and username != config.allow_user:
             logging.warning(f'Unauthorized access denied for {user_id} `{username}`.')
             update.effective_chat.send_message(
                 "I'm not your bot! Refer to https://github.com/peng1999/nwpu-grade to deploy your "
@@ -60,16 +60,6 @@ def print_courses(courses: List[Course], **kwargs):
     with StringIO() as sio:
         nwpu_client.printgrade(file=sio, **kwargs)
         return sio.getvalue()
-
-
-@restricted
-def start(update: Update, context: CallbackContext):
-    logging.info(f'/start from user {update.effective_user.id}')
-    username = update.effective_user.username
-    if username is not None:
-        logging.info(f'username is `{username}`')
-
-    update.effective_chat.send_message(f'Hello {update.effective_user.full_name}!')
 
 
 @restricted
@@ -167,6 +157,17 @@ def stop_monitor(update: Update, context: CallbackContext):
         return
     logging.info('stopping background thread...')
     stop_flag.set()
+
+
+@restricted
+def start(update: Update, context: CallbackContext):
+    logging.info(f'/start from user {update.effective_user.id}')
+    username = update.effective_user.username
+    if username is not None:
+        logging.info(f'username is `{username}`')
+
+    update.effective_chat.send_message(f'Hello {update.effective_user.full_name}!')
+    help_text(update, context)
 
 
 def help_text(update: Update, context: CallbackContext):
