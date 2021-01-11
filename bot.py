@@ -9,6 +9,7 @@ from typing import List
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CallbackContext, CommandHandler, CallbackQueryHandler
 from telegram.update import Update
+from telegram.utils.helpers import escape_markdown
 
 import config
 from client import NWPUgrade
@@ -62,6 +63,13 @@ def print_courses(courses: List[Course], **kwargs):
         return sio.getvalue()
 
 
+def render_grade(courses: List[Course], time: datetime):
+    text = print_courses(courses, avg_by_year=False)
+    text = escape_markdown(text, version=2)
+    text += f'\n_{time:%F %T}_'.replace('-', '\\-')
+    return text
+
+
 @restricted
 def query(update: Update, context: CallbackContext):
     logging.info(f'/query from user {update.effective_user.id}')
@@ -84,9 +92,8 @@ def query(update: Update, context: CallbackContext):
     button_list.append(InlineKeyboardButton('全部', callback_data='all'))
     markup = InlineKeyboardMarkup(build_menu(button_list, 2))
 
-    text = print_courses(grade_data.courses)
-    update.message.reply_text(text, reply_markup=markup)
-    # update.effective_chat.send_message(text)
+    text = render_grade(grade_data.courses, grade_data.time)
+    update.message.reply_text(text, reply_markup=markup, parse_mode='MarkdownV2')
 
 
 def button(update: Update, context: CallbackContext):
@@ -97,11 +104,13 @@ def button(update: Update, context: CallbackContext):
         courses = grade_data.courses
     else:
         courses = grade_data.courses_by_semester(q.data)
-    text = print_courses(courses, avg_by_year=False)
+    text = render_grade(courses, grade_data.time)
     q.answer()
     # bypass the exception raised when text not change
     if text.strip() != update.effective_message.text.strip():
-        q.edit_message_text(text, reply_markup=update.effective_message.reply_markup)
+        q.edit_message_text(text,
+                            reply_markup=update.effective_message.reply_markup,
+                            parse_mode='MarkdownV2')
 
 
 def query_diff():
