@@ -27,6 +27,8 @@ Telegram Bot依赖：
 
 ## 部署 Telegram Bot
 
+### 普通方式
+
 1. 克隆项目
 
    ```
@@ -66,6 +68,30 @@ Telegram Bot依赖：
 > 2. 如果不想使用 Poetry，也可以直接使用 pip 安装依赖包
 
 [poetry]: https://python-poetry.org/
+
+### Docker 部署
+
+1. 克隆项目
+
+   ```
+   git clone https://github.com/peng1999/nwpu-grade.git
+   ```
+
+2. 利用 [Bot Father](https://t.me/BotFather) 创建一个 Telegram Bot。
+
+3. 创建并修改 `config.py`
+
+   ```
+   cp config.py.example config.py
+   vim config.py
+   ```
+
+4. 构建并运行 Docker
+
+   ```
+   docker build -t nwpu-grade .
+   docker run -d -e HTTPS_PROXY=<your proxy address> --name nwpu-grade nwpu-grade
+   ```
 
 ## 直接命令行查询
 
