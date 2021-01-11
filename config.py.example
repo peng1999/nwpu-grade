@@ -7,3 +7,5 @@ token = "Telegram Bot Token"
 allow_user = "username or user_id"
 # 临时文件的储存位置，默认为当前目录
 data_path = "."
+# 两次查询时间的间隔（秒）
+interval = 30 * 60

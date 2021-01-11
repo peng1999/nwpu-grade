@@ -117,20 +117,27 @@ def query_diff():
     new_grade_data = GradeData(courses=nwpu_client.grades)
     new_grade_data.save(GRADE_DATA_FILE)
 
-    return new_grade_data.diff(grade_data)
+    return new_grade_data.diff(grade_data), grade_data.diff(new_grade_data)
 
 
 def listen_loop(chat_id: int):
-    wait_time = 60 * 60
+    try:
+        wait_time = config.interval
+    except AttributeError:
+        wait_time = 30 * 60
     while not stop_flag.wait(timeout=wait_time):
         # everyone is sleeping during this time, so don't update
         if 3 <= datetime.now().hour < 7:
             continue
-        diff = query_diff()
+        diff, redraw = query_diff()
         if len(diff) > 0:
-            updater.bot.send_message(chat_id, 'New updates!')
-            text = print_courses(diff, avg_all=False, avg_by_year=False)
-            updater.bot.send_message(chat_id, text)
+            msg = '有新的成绩！\n\n'
+            msg += print_courses(diff, avg_all=False, avg_by_year=False)
+            updater.bot.send_message(chat_id, msg)
+        if len(redraw) > 0:
+            msg = '有成绩被撤回：\n\n'
+            msg += '，'.join([course.course_name for course in redraw])
+            updater.bot.send_message(chat_id, msg)
     updater.bot.send_message(chat_id, 'Monitor stopped!')
     logging.info('background thread stopped')
 
