@@ -10,6 +10,7 @@ cssselect = "^1.1.0"
 lxml = "^4.6.2"
 python-telegram-bot = "^13.1"
 pydantic = "^1.7.3"
+requests = "^2.25.1"
 
 [tool.poetry.dev-dependencies]
 
