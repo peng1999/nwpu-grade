@@ -1,5 +1,9 @@
+# NWPU设置
 username = "xxxxxxxxxx"  #  学号
 password = "xxxxxxxxxx"  #  密码
+
+# BUAA设置
+cookie = "xxxxxxxxx"  # 登录 Cookie
 
 # 访问 https://t.me/BotFather 以获取
 token = "Telegram Bot Token"
