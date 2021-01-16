@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import abc
 import logging
 import getpass
 from collections import OrderedDict
@@ -25,36 +26,9 @@ def get_config(name: str, passwd=False):
     return input(prompt)
 
 
-class NWPUScraper:
-    LOGIN_URL = "http://us.nwpu.edu.cn/eams/login.action"
-    GRADE_URL = "http://us.nwpu.edu.cn/eams/teach/grade/course/person!historyCourseGrade.action" \
-                "?projectType=MAJOR"
-
-    def __init__(self):
-        self.username = get_config('username')
-        self.password = get_config('password', passwd=True)
-
-    def request_grade(self):
-        logging.info('access us.nwpu.edu.cn to query grades...')
-        login_data = {'username': self.username, 'password': self.password}
-        r = requests.post(self.LOGIN_URL, data=login_data, allow_redirects=False)
-        cookies = r.cookies
-        r = requests.get(self.GRADE_URL, cookies=cookies)
-        tree = etree.HTML(r.text)
-        trs = tree.cssselect("div.grid table tbody tr")
-
-        grades = [
-            Course(
-                semester=tr[0].text,
-                course_name=tr[3][0].text,
-                course_id=tr[1].text,
-                credit=tr[5].text,
-                score=tr[10].text.strip()
-            )
-            for tr in trs
-        ]
-
-        return grades
+class ScraperBase(abc.ABC):
+    @abc.abstractmethod
+    def request_grade(self): ...
 
     def avg_by_year(self, grades: List[Course]):
         total_mark = 0.
@@ -116,8 +90,72 @@ class NWPUScraper:
         return ''.join(msg)
 
 
+class NWPUScraper(ScraperBase):
+    LOGIN_URL = "http://us.nwpu.edu.cn/eams/login.action"
+    GRADE_URL = "http://us.nwpu.edu.cn/eams/teach/grade/course/person!historyCourseGrade.action" \
+                "?projectType=MAJOR"
+
+    def __init__(self):
+        self.username = get_config('username')
+        self.password = get_config('password', passwd=True)
+
+    def request_grade(self):
+        logging.info('access us.nwpu.edu.cn to query grades...')
+        login_data = {'username': self.username, 'password': self.password}
+        r = requests.post(self.LOGIN_URL, data=login_data, allow_redirects=False)
+        cookies = r.cookies
+        r = requests.get(self.GRADE_URL, cookies=cookies)
+        tree = etree.HTML(r.text)
+        trs = tree.cssselect("div.grid table tbody tr")
+
+        grades = [
+            Course(
+                semester=tr[0].text,
+                course_name=tr[3][0].text,
+                course_id=tr[1].text,
+                credit=tr[5].text,
+                score=tr[10].text.strip()
+            )
+            for tr in trs
+        ]
+
+        return grades
+
+
+class BUAAScraper(ScraperBase):
+    GRADE_URL = "https://app.buaa.edu.cn/buaascore/wap/default/index"
+
+    def __init__(self):
+        self.cookie = get_config('cookie')
+
+    def request_grade(self):
+        headers = {
+            'X-Requested-With': 'XMLHttpRequest',
+            'User-Agent': 'Mozilla/5.0 (Linux; Android 8.0; Pixel 2 Build/OPD3.170816.012) '
+                          'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Mobile '
+                          'Safari/537.36',
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'Origin': 'https://app.buaa.edu.cn',
+            'Cookie': self.cookie,
+        }
+
+        r = requests.post(self.GRADE_URL, headers=headers)
+        json_list = r.json()['d']
+        grades = [Course(
+                      semester=json_list[i]['year']
+                               + ' ' + ('秋' if json_list[i]['xq'] == '1' else '春'),
+                      course_name=json_list[i]['kcmc'],
+                      course_id=json_list[i]['kcmc'],
+                      credit=json_list[i]['xf'],
+                      score=json_list[i]['kccj'],
+                  )
+                  for i in json_list]
+
+        return grades
+
+
 def main():
-    scraper = NWPUScraper()
+    scraper = BUAAScraper()
     grades = scraper.request_grade()
 
     print('\n'.join([
