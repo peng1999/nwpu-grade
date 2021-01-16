@@ -3,7 +3,6 @@ import os
 import threading
 from datetime import datetime, timedelta
 from functools import wraps
-from io import StringIO
 from typing import List
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
@@ -12,7 +11,7 @@ from telegram.update import Update
 from telegram.utils.helpers import escape_markdown
 
 import config
-from client import NWPUgrade
+from client import NWPUScraper
 from data import GradeData, Course
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -55,12 +54,17 @@ stop_flag = threading.Event()  # background thread is running when not set
 stop_flag.set()
 
 
-def print_courses(courses: List[Course], **kwargs):
-    nwpu_client = NWPUgrade()
-    nwpu_client.grades = courses
-    with StringIO() as sio:
-        nwpu_client.printgrade(file=sio, **kwargs)
-        return sio.getvalue()
+def print_courses(courses: List[Course], *, avg_by_year=True, avg_all=True):
+    if avg_by_year and not avg_all:
+        raise ValueError('avg_all should be True when avg_by_year is True')
+
+    client = NWPUScraper()
+    msg = [client.fmt_grades(courses)]
+
+    if avg_by_year or avg_all:
+        msg.append(client.fmt_gpa(courses, by_year=avg_by_year))
+
+    return '\n'.join(msg)
 
 
 def render_grade(courses: List[Course], time: datetime):
@@ -82,9 +86,9 @@ def query(update: Update, context: CallbackContext):
 
     except FileNotFoundError:
         # If not, access server to update it
-        nwpu_client = NWPUgrade()
-        nwpu_client.grade()
-        grade_data = GradeData(courses=nwpu_client.grades)
+        nwpu_client = NWPUScraper()
+        grades = nwpu_client.request_grade()
+        grade_data = GradeData(courses=grades)
         grade_data.save(GRADE_DATA_FILE)
 
     semester = grade_data.semesters()
@@ -121,9 +125,9 @@ def query_diff():
     except FileNotFoundError:
         return []
 
-    nwpu_client = NWPUgrade()
-    nwpu_client.grade()
-    new_grade_data = GradeData(courses=nwpu_client.grades)
+    nwpu_client = NWPUScraper()
+    grades = nwpu_client.request_grade()
+    new_grade_data = GradeData(courses=grades)
     new_grade_data.save(GRADE_DATA_FILE)
 
     return new_grade_data.diff(grade_data), grade_data.diff(new_grade_data)
