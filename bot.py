@@ -11,7 +11,7 @@ from telegram.update import Update
 from telegram.utils.helpers import escape_markdown
 
 import config
-from client import NWPUScraper
+from client import BUAAScraper as Scraper
 from data import GradeData, Course
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -58,7 +58,7 @@ def print_courses(courses: List[Course], *, avg_by_year=True, avg_all=True):
     if avg_by_year and not avg_all:
         raise ValueError('avg_all should be True when avg_by_year is True')
 
-    client = NWPUScraper()
+    client = Scraper()
     msg = [client.fmt_grades(courses)]
 
     if avg_by_year or avg_all:
@@ -86,7 +86,7 @@ def query(update: Update, context: CallbackContext):
 
     except FileNotFoundError:
         # If not, access server to update it
-        nwpu_client = NWPUScraper()
+        nwpu_client = Scraper()
         grades = nwpu_client.request_grade()
         grade_data = GradeData(courses=grades)
         grade_data.save(GRADE_DATA_FILE)
@@ -125,7 +125,7 @@ def query_diff():
     except FileNotFoundError:
         return []
 
-    nwpu_client = NWPUScraper()
+    nwpu_client = Scraper()
     grades = nwpu_client.request_grade()
     new_grade_data = GradeData(courses=grades)
     new_grade_data.save(GRADE_DATA_FILE)
