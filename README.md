@@ -15,6 +15,7 @@ NWPU成绩查询/通知机
 
 命令行客户端依赖：
 
+- requests
 - lxml
 - cssselect
 
@@ -105,4 +106,4 @@ python3 client.py
 
 ## 致谢
 
-本项目部分代码来自 @Dy1aNT 已经停止更新的项目 <https://github.com/Dy1aNT/NWPUgrade.git>
+本项目受到了 @Dy1aNT 已经停止更新的项目 <https://github.com/Dy1aNT/NWPUgrade.git> 的启发。
