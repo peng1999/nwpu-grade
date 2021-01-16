@@ -11,8 +11,8 @@ from telegram.update import Update
 from telegram.utils.helpers import escape_markdown
 
 import config
-from client import BUAAScraper as Scraper
-from data import GradeData, Course
+from scrapers import Scraper
+from scrapers.base import GradeItem, GradeData
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -54,7 +54,7 @@ stop_flag = threading.Event()  # background thread is running when not set
 stop_flag.set()
 
 
-def print_courses(courses: List[Course], *, avg_by_year=True, avg_all=True):
+def print_courses(courses: List[GradeItem], *, avg_by_year=True, avg_all=True):
     if avg_by_year and not avg_all:
         raise ValueError('avg_all should be True when avg_by_year is True')
 
@@ -67,7 +67,7 @@ def print_courses(courses: List[Course], *, avg_by_year=True, avg_all=True):
     return '\n'.join(msg)
 
 
-def render_grade(courses: List[Course], time: datetime):
+def render_grade(courses: List[GradeItem], time: datetime):
     text = print_courses(courses, avg_by_year=False)
     text = escape_markdown(text, version=2)
     text += f'\n_{time:%F %T}_'.replace('-', '\\-')
