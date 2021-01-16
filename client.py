@@ -6,7 +6,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import getpass
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from typing import List
 
 import requests
@@ -106,94 +106,104 @@ class NWPUgrade:
                 print_to_file('总学分绩', mark / credit)
 
 
-LOGIN_URL = "http://us.nwpu.edu.cn/eams/login.action"
-GRADE_URL = "http://us.nwpu.edu.cn/eams/teach/grade/course/person!historyCourseGrade.action" \
-            "?projectType=MAJOR"
+class NWPUScraper:
+    LOGIN_URL = "http://us.nwpu.edu.cn/eams/login.action"
+    GRADE_URL = "http://us.nwpu.edu.cn/eams/teach/grade/course/person!historyCourseGrade.action" \
+                "?projectType=MAJOR"
 
+    def __init__(self):
+        self.username = get_config('username')
+        self.password = get_config('password', passwd=True)
 
-def request_grade(username, password):
-    login_data = {'username': username, 'password': password}
-    r = requests.post(LOGIN_URL, data=login_data, allow_redirects=False)
-    cookies = r.cookies
-    r = requests.get(GRADE_URL, cookies=cookies)
-    tree = etree.HTML(r.text)
-    trs = tree.cssselect("div.grid table tbody tr")
+    def request_grade(self):
+        login_data = {'username': self.username, 'password': self.password}
+        r = requests.post(self.LOGIN_URL, data=login_data, allow_redirects=False)
+        cookies = r.cookies
+        r = requests.get(self.GRADE_URL, cookies=cookies)
+        tree = etree.HTML(r.text)
+        trs = tree.cssselect("div.grid table tbody tr")
 
-    grades = [
-        Course(
-            semester=tr[0].text,
-            course_name=tr[3][0].text,
-            course_id=tr[1].text,
-            credit=tr[5].text,
-            score=tr[10].text.strip()
-        )
-        for tr in trs
-    ]
+        grades = [
+            Course(
+                semester=tr[0].text,
+                course_name=tr[3][0].text,
+                course_id=tr[1].text,
+                credit=tr[5].text,
+                score=tr[10].text.strip()
+            )
+            for tr in trs
+        ]
 
-    return grades
+        return grades
 
+    def avg_by_year(self, grades: List[Course]):
+        total_mark = 0.
+        total_credit = 0.
+        years = []
+        mark_by_year: OrderedDict[str, float] = OrderedDict()
+        credit_by_year: OrderedDict[str, float] = OrderedDict()
+        for grade in grades:
+            try:
+                score = float(grade.score)
+                credit = float(grade.credit)
+            except ValueError:
+                pass
+            else:
+                total_mark += score * credit
+                total_credit += credit
 
-def avg_by_year(grades: List[Course]):
-    total_mark = 0.
-    total_credit = 0.
-    years = []
-    mark_by_year = defaultdict(float)
-    credit_by_year = defaultdict(float)
-    for grade in grades:
-        try:
-            score = float(grade.score)
-            credit = float(grade.credit)
-        except ValueError:
-            pass
-        else:
-            total_mark += score * credit
-            total_credit += credit
+                year = grade.semester.split()[0]
+                if year not in mark_by_year:
+                    years.append(year)
 
-            year = grade.semester.split()[0]
-            if year not in mark_by_year:
-                years.append(year)
+                mark_by_year[year] = mark_by_year.get(year, 0) + score * credit
+                credit_by_year[year] = credit_by_year.get(year, 0) + credit
 
-            mark_by_year[year] += score * credit
-            credit_by_year[year] += credit
+        gpa_by_year = {}
+        for year in years:
+            gpa_by_year[year] = mark_by_year[year] / credit_by_year[year]
 
-    gpa_by_year = {}
-    for year in years:
-        gpa_by_year[year] = mark_by_year[year] / credit_by_year[year]
+        total_gpa = float('nan')
+        if total_credit != 0:
+            total_gpa = total_mark / total_credit
 
-    total_gpa = float('nan')
-    if total_credit != 0:
-        total_gpa = total_mark / total_credit
+        return total_gpa, gpa_by_year
 
-    return total_gpa, gpa_by_year
+    def fmt_grades(self, grades: List[Course]):
+        msg: List[str] = []
 
+        for grade in grades:
+            msg.append(f'\n'
+                       f'{grade.semester}\n'  # 学期
+                       f'{grade.course_name}\n'  # 课程名称
+                       f'学分：{grade.credit}\n'  # 学分
+                       f'最终成绩：{grade.score}\n'  # 成绩
+                       )
 
-def fmt_grades(grades: List[Course]):
-    msg: List[str] = []
+        return ''.join(msg)
 
-    for grade in grades:
-        msg.append(f'\n'
-                   f'{grade.semester}\n'  # 学期
-                   f'{grade.course_name}\n'  # 课程名称
-                   f'学分：{grade.credit}\n'  # 学分
-                   f'最终成绩：{grade.score}\n'  # 成绩
-                   )
+    def fmt_gpa(self, grades: List[Course], by_year=False):
+        total_gpa, gpa_by_year = self.avg_by_year(grades)
+        msg: List[str] = []
 
-    total_gpa, gpa_by_year = avg_by_year(grades)
+        if by_year:
+            for year in gpa_by_year:
+                msg.append(f'{year} 学年学分绩：{gpa_by_year[year]}\n')
+            msg.append('\n')
 
-    msg.append('\n')
-    for year in gpa_by_year:
-        msg.append(f'{year} 学年学分绩：{gpa_by_year[year]}\n')
+        msg.append(f'总学分绩：{total_gpa}\n')
 
-    msg.append('\n')
-    msg.append(f'总学分绩：{total_gpa}\n')
-
-    return ''.join(msg)
+        return ''.join(msg)
 
 
 def main():
-    grades = request_grade(get_config('username'), get_config('password', passwd=True))
+    scraper = NWPUScraper()
+    grades = scraper.request_grade()
 
-    print(fmt_grades(grades))
+    print('\n'.join([
+        scraper.fmt_grades(grades),
+        scraper.fmt_gpa(grades, by_year=True),
+    ]))
 
 
 if __name__ == "__main__":
