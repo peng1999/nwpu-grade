@@ -3,10 +3,10 @@ import logging
 from telegram.ext import CallbackContext, CommandHandler, CallbackQueryHandler
 from telegram.update import Update
 
-from bot_impl import updater
-from bot_impl.monitor import start_monitor, stop_monitor
-from bot_impl.query import query, button
-from bot_impl.util import restricted
+from bot import updater
+from bot.monitor import start_monitor, stop_monitor
+from bot.query import query, button
+from bot.util import restricted
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)

@@ -4,8 +4,8 @@ from datetime import datetime, timedelta
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
 
-from bot_impl.util import restricted, build_menu, render_grade
-from bot_impl import GRADE_DATA_FILE
+from bot.util import restricted, build_menu, render_grade
+from bot import GRADE_DATA_FILE
 from scrapers import Scraper
 from scrapers.base import GradeData
 

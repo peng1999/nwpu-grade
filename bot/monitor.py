@@ -6,8 +6,8 @@ from telegram import Update
 from telegram.ext import CallbackContext
 
 import config
-from bot_impl.util import print_courses, restricted
-from bot_impl import GRADE_DATA_FILE, updater
+from bot.util import print_courses, restricted
+from bot import GRADE_DATA_FILE, updater
 from scrapers import Scraper
 from scrapers.base import GradeData
 
