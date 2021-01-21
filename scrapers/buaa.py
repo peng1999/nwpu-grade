@@ -9,6 +9,7 @@ class Scraper(ScraperBase):
 
     def __init__(self):
         self.cookie = get_config('cookie')
+        self.data = get_config('data')
 
     def request_grade(self):
         headers = {
@@ -21,7 +22,7 @@ class Scraper(ScraperBase):
             'Cookie': self.cookie,
         }
 
-        r = requests.post(self.GRADE_URL, headers=headers)
+        r = requests.post(self.GRADE_URL, data=self.data, headers=headers)
         json_list = r.json()['d']
         grades = [
             GradeItem(

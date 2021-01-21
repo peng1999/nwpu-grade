@@ -4,6 +4,7 @@ password = "xxxxxxxxxx"  #  密码
 
 # BUAA设置
 cookie = "xxxxxxxxx"  # 登录 Cookie
+data = "xq=1&year=2020-2021"  # 查询的学期
 
 # 访问 https://t.me/BotFather 以获取
 token = "Telegram Bot Token"
