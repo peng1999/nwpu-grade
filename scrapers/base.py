@@ -30,29 +30,35 @@ class GradeData(BaseModel):
         with open(filename, 'w') as f:
             f.write(self.json())
 
-    def diff(self, old: 'GradeData'):
-        id_score_pairs = [(course.course_id, course.score) for course in old.courses]
-        return [
-            course for course in self.courses
-            if (course.course_id, course.score) not in id_score_pairs
-        ]
 
-    def semesters(self):
-        s: List[str] = []
-        for course in self.courses:
-            if course.semester not in s:
-                s.append(course.semester)
-        return s
+def diff_courses(new: List[GradeItem], old: List[GradeItem]):
+    """returns new courses compared to old"""
+    id_score_pairs = [(course.course_id, course.score) for course in old]
+    return [
+        course for course in new
+        if (course.course_id, course.score) not in id_score_pairs
+    ]
 
-    def courses_by_semester(self, semester):
-        return [course for course in self.courses if course.semester == semester]
+
+def semesters(grades: List[GradeItem]):
+    s: List[str] = []
+    for course in grades:
+        if course.semester not in s:
+            s.append(course.semester)
+    return s
+
+
+def courses_by_semester(grades: List[GradeItem], semester: str):
+    return [course for course in grades if course.semester == semester]
 
 
 class ScraperBase(abc.ABC):
     @abc.abstractmethod
-    def request_grade(self) -> List[GradeItem]: ...
+    def request_grade(self) -> List[GradeItem]:
+        ...
 
-    def avg_by_year(self, grades: List[GradeItem]):
+    @classmethod
+    def avg_by_year(cls, grades: List[GradeItem]):
         total_mark = 0.
         total_credit = 0.
         years = []
@@ -85,7 +91,8 @@ class ScraperBase(abc.ABC):
 
         return total_gpa, gpa_by_year
 
-    def fmt_grades(self, grades: List[GradeItem]):
+    @classmethod
+    def fmt_grades(cls, grades: List[GradeItem]):
         msg: List[str] = []
 
         for grade in grades:
@@ -98,8 +105,9 @@ class ScraperBase(abc.ABC):
 
         return ''.join(msg)
 
-    def fmt_gpa(self, grades: List[GradeItem], by_year=False):
-        total_gpa, gpa_by_year = self.avg_by_year(grades)
+    @classmethod
+    def fmt_gpa(cls, grades: List[GradeItem], by_year=False):
+        total_gpa, gpa_by_year = cls.avg_by_year(grades)
         msg: List[str] = []
 
         if by_year:

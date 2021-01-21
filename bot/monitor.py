@@ -8,7 +8,7 @@ from telegram.ext import CallbackContext
 import config
 from bot.util import print_courses, restricted
 from bot import GRADE_DATA_FILE, updater, get_scraper
-from scrapers.base import GradeData
+from scrapers.base import GradeData, diff_courses
 
 stop_flag = threading.Event()  # background thread is running when not set
 stop_flag.set()
@@ -27,7 +27,8 @@ def query_diff():
     new_grade_data = GradeData(courses=grades)
     new_grade_data.save(GRADE_DATA_FILE)
 
-    return new_grade_data.diff(grade_data), grade_data.diff(new_grade_data)
+    return (diff_courses(new_grade_data.courses, grade_data.courses),
+            diff_courses(grade_data.courses, new_grade_data.courses))
 
 
 def listen_loop(chat_id: int):

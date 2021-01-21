@@ -60,7 +60,7 @@ Telegram Bot依赖：
 5. 运行
 
    ```
-   poetry run python bot.py
+   poetry run python launch_bot.py
    ```
 
 > 注：

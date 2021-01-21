@@ -9,6 +9,20 @@ from . import get_config
 from .base import GradeItem, ScraperBase
 
 
+class NWPUGradeItem(GradeItem):
+    daily_score: Optional[str]  # 平时成绩
+    midterm_score: Optional[str]  # 期中成绩
+    exp_score: Optional[str]  # 实验成绩
+    test_score: Optional[str]  # 期末成绩
+
+
+def strip_if_not_none(x: Optional[str]):
+    if x is not None:
+        return x.strip()
+    else:
+        return x
+
+
 class Scraper(ScraperBase):
     LOGIN_URL = "http://us.nwpu.edu.cn/eams/login.action"
     GRADE_URL = "http://us.nwpu.edu.cn/eams/teach/grade/course/person!historyCourseGrade.action" \
@@ -44,12 +58,16 @@ class Scraper(ScraperBase):
         trs = tree.cssselect("div.grid table tbody tr")
 
         grades = [
-            GradeItem(
+            NWPUGradeItem(
                 semester=tr[0].text,
                 course_name=tr[3][0].text,
                 course_id=tr[1].text,
                 credit=tr[5].text,
-                score=tr[10].text.strip()
+                score=tr[10].text.strip(),
+                daily_score=strip_if_not_none(tr[6].text),
+                midterm_score=strip_if_not_none(tr[7].text),
+                exp_score=strip_if_not_none(tr[8].text),
+                test_score=strip_if_not_none(tr[9].text),
             )
             for tr in trs
         ]

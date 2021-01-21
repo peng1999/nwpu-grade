@@ -1,52 +1,44 @@
 import logging
-from datetime import datetime, timedelta
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
 
 from bot.util import restricted, build_menu, render_grade
-from bot import GRADE_DATA_FILE, get_scraper
-from scrapers.base import GradeData
+from bot import get_scraper
+from scrapers.base import courses_by_semester, semesters
 
 
 @restricted
 def query(update: Update, context: CallbackContext):
     logging.info(f'/query from user {update.effective_user.id}')
 
-    try:
-        # If there exists cached data within 1 hour, use it
-        grade_data = GradeData.load(GRADE_DATA_FILE)
-        if datetime.now() - grade_data.time > timedelta(hours=1):
-            raise FileNotFoundError
+    client = get_scraper()
+    grades = client.request_grade()
 
-    except FileNotFoundError:
-        # If not, access server to update it
-        client = get_scraper()
-        grades = client.request_grade()
-        grade_data = GradeData(courses=grades)
-        grade_data.save(GRADE_DATA_FILE)
-
-    semester = grade_data.semesters()
+    semester = semesters(grades)
     button_list = [InlineKeyboardButton(s, callback_data=s) for s in semester]
     button_list.append(InlineKeyboardButton('全部', callback_data='all'))
     markup = InlineKeyboardMarkup(build_menu(button_list, 2))
 
-    text = render_grade(grade_data.courses, grade_data.time)
+    text = render_grade(grades)
     update.message.reply_text(text, reply_markup=markup, parse_mode='MarkdownV2')
 
 
 def button(update: Update, context: CallbackContext):
     q = update.callback_query
     logging.info(f'button clicked with data=`{q.data}`')
-    grade_data = GradeData.load(GRADE_DATA_FILE)
+
+    client = get_scraper()
+    grades = client.request_grade()
+
     if q.data == 'all':
-        courses = grade_data.courses
+        courses = grades
     else:
-        courses = grade_data.courses_by_semester(q.data)
-    text = render_grade(courses, grade_data.time)
+        courses = courses_by_semester(grades, q.data)
+    text = render_grade(courses)
     q.answer()
     # bypass the exception raised when text not change
-    if text.strip() != update.effective_message.text.strip():
+    if text.strip() != update.effective_message.text_markdown_v2.strip():
         q.edit_message_text(text,
                             reply_markup=update.effective_message.reply_markup,
                             parse_mode='MarkdownV2')
