@@ -61,7 +61,7 @@ def listen_loop(chat_id: int):
             logging.error(e)
 
     logging.info('background thread stopped')
-    updater.bot.send_message(chat_id, '停止监视！')
+    updater.bot.send_message(chat_id, '已停止监视！')
 
 
 @restricted
@@ -110,4 +110,3 @@ def monitor_status(update: Update, context: CallbackContext):
             q.edit_message_text(text, reply_markup=markup, parse_mode='MarkdownV2')
     else:
         update.message.reply_text(text, reply_markup=markup, parse_mode='MarkdownV2')
-
