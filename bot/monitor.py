@@ -2,7 +2,7 @@ import logging
 import threading
 from datetime import datetime
 
-from telegram import Update
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
 
 import config
@@ -86,4 +86,28 @@ def stop_monitor(update: Update, context: CallbackContext):
         return
     logging.info('stopping background thread...')
     stop_flag.set()
+
+
+@restricted
+def monitor_status(update: Update, context: CallbackContext):
+    if stop_flag.is_set():
+        text = '*未运行*'
+    else:
+        text = '*运行中*'
+
+    try:
+        grade_data = GradeData.load(GRADE_DATA_FILE)
+        text += f'\n\n最后一次查询时间：\n{grade_data.time:%F %T}'.replace('-', '\\-')
+    except FileNotFoundError:
+        pass
+
+    markup = InlineKeyboardMarkup([[InlineKeyboardButton('刷新', callback_data='monitor/status')]])
+
+    q = update.callback_query
+    if q is not None:
+        q.answer()
+        if text.strip() != update.effective_message.text_markdown_v2.strip():
+            q.edit_message_text(text, reply_markup=markup, parse_mode='MarkdownV2')
+    else:
+        update.message.reply_text(text, reply_markup=markup, parse_mode='MarkdownV2')
 

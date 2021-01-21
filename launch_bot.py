@@ -4,7 +4,7 @@ from telegram.ext import CallbackContext, CommandHandler, CallbackQueryHandler
 from telegram.update import Update
 
 from bot import updater
-from bot.monitor import start_monitor, stop_monitor
+from bot.monitor import start_monitor, stop_monitor, monitor_status
 from bot.query import query, query_button, detail_button
 from bot.util import restricted
 
@@ -29,6 +29,7 @@ def help_text(update: Update, context: CallbackContext):
 /query - 查询所有成绩
 /start_monitor - 开始监视成绩
 /stop_monitor - 停止监视成绩
+/monitor_status - 监视器状态
 /help - 显示帮助信息
     """)
 
@@ -47,6 +48,8 @@ dispatcher.add_handler(CallbackQueryHandler(detail_button, pattern='query/detail
 # monitor
 dispatcher.add_handler(CommandHandler('start_monitor', start_monitor))
 dispatcher.add_handler(CommandHandler('stop_monitor', stop_monitor))
+dispatcher.add_handler(CommandHandler('monitor_status', monitor_status))
+dispatcher.add_handler(CallbackQueryHandler(monitor_status, pattern='monitor/status'))
 
 updater.start_polling()
 
