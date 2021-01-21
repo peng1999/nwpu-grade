@@ -1,3 +1,6 @@
+# 选择学校
+university = 'buaa|nwpu'
+
 # NWPU设置
 username = "xxxxxxxxxx"  #  学号
 password = "xxxxxxxxxx"  #  密码
