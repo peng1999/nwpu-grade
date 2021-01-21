@@ -118,3 +118,8 @@ class ScraperBase(abc.ABC):
         msg.append(f'总学分绩：{total_gpa}\n')
 
         return ''.join(msg)
+
+
+class DetailedItem(abc.ABC):
+    @abc.abstractmethod
+    def fmt_detail(self) -> str: ...

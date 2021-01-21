@@ -5,7 +5,7 @@ from telegram.update import Update
 
 from bot import updater
 from bot.monitor import start_monitor, stop_monitor, monitor_status
-from bot.query import query, query_button, detail_button
+from bot.query import query, query_button, detail_button, detail_item_button
 from bot.util import restricted
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -44,6 +44,7 @@ dispatcher.add_handler(CommandHandler('help', help_text))
 dispatcher.add_handler(CommandHandler('query', query))
 dispatcher.add_handler(CallbackQueryHandler(query_button, pattern='query/list'))
 dispatcher.add_handler(CallbackQueryHandler(detail_button, pattern='query/detail'))
+dispatcher.add_handler(CallbackQueryHandler(detail_item_button, pattern='query/single'))
 
 # monitor
 dispatcher.add_handler(CommandHandler('start_monitor', start_monitor))

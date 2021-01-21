@@ -6,14 +6,26 @@ from lxml import etree
 from requests.cookies import RequestsCookieJar
 
 from . import get_config
-from .base import GradeItem, ScraperBase
+from .base import GradeItem, ScraperBase, DetailedItem
 
 
-class NWPUGradeItem(GradeItem):
+class NWPUGradeItem(GradeItem, DetailedItem):
     daily_score: Optional[str]  # 平时成绩
     midterm_score: Optional[str]  # 期中成绩
     exp_score: Optional[str]  # 实验成绩
     test_score: Optional[str]  # 期末成绩
+
+    def fmt_detail(self) -> str:
+        texts = []
+        if self.daily_score is not None:
+            texts.append(f'平时成绩：{self.daily_score}\n')
+        if self.midterm_score is not None:
+            texts.append(f'期中成绩：{self.midterm_score}\n')
+        if self.exp_score is not None:
+            texts.append(f'实验成绩：{self.exp_score}\n')
+        if self.test_score is not None:
+            texts.append(f'期末成绩：{self.test_score}\n')
+        return ''.join(texts)
 
 
 def strip_if_not_none(x: Optional[str]):
