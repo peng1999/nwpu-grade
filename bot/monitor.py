@@ -22,8 +22,7 @@ def query_diff():
     except FileNotFoundError:
         return []
 
-    client = get_scraper()
-    grades = client.request_grade()
+    grades = get_scraper().request_grade()
     new_grade_data = GradeData(courses=grades)
     new_grade_data.save(GRADE_DATA_FILE)
 
@@ -38,7 +37,14 @@ def listen_loop(chat_id: int):
         wait_time = 30 * 60
 
     try:
-        while not stop_flag.wait(timeout=wait_time):
+        grades = get_scraper().request_grade()
+        GradeData(courses=grades).save(GRADE_DATA_FILE)
+    except Exception as e:
+        logging.error(e)
+        updater.bot.send_message(chat_id, '初始状态获取失败，程序可能不能正确运行！')
+
+    while not stop_flag.wait(timeout=wait_time):
+        try:
             # everyone is sleeping during this time, so don't update
             if 3 <= datetime.now().hour < 7:
                 continue
@@ -51,15 +57,17 @@ def listen_loop(chat_id: int):
                 msg = '有成绩被撤回：\n\n'
                 msg += '，'.join([course.course_name for course in redraw])
                 updater.bot.send_message(chat_id, msg)
-    finally:
-        updater.bot.send_message(chat_id, 'Monitor stopped!')
-        logging.info('background thread stopped')
+        except Exception as e:
+            logging.error(e)
+
+    logging.info('background thread stopped')
+    updater.bot.send_message(chat_id, '停止监视！')
 
 
 @restricted
 def start_monitor(update: Update, context: CallbackContext):
     if not stop_flag.is_set():
-        update.effective_chat.send_message('Already started!')
+        update.effective_chat.send_message('已经在监视了！')
         return
     stop_flag.clear()
 
@@ -67,7 +75,7 @@ def start_monitor(update: Update, context: CallbackContext):
                                          args=(update.effective_chat.id,))
     background_thread.daemon = True
     background_thread.start()
-    update.effective_chat.send_message('Started monitor grade change!')
+    update.effective_chat.send_message('开始监视新的成绩！')
     logging.info('background thread started')
 
 
