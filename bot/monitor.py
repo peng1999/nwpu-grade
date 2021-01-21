@@ -7,8 +7,7 @@ from telegram.ext import CallbackContext
 
 import config
 from bot.util import print_courses, restricted
-from bot import GRADE_DATA_FILE, updater
-from scrapers import Scraper
+from bot import GRADE_DATA_FILE, updater, get_scraper
 from scrapers.base import GradeData
 
 stop_flag = threading.Event()  # background thread is running when not set
@@ -23,8 +22,8 @@ def query_diff():
     except FileNotFoundError:
         return []
 
-    nwpu_client = Scraper()
-    grades = nwpu_client.request_grade()
+    client = get_scraper()
+    grades = client.request_grade()
     new_grade_data = GradeData(courses=grades)
     new_grade_data.save(GRADE_DATA_FILE)
 

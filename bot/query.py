@@ -5,8 +5,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
 
 from bot.util import restricted, build_menu, render_grade
-from bot import GRADE_DATA_FILE
-from scrapers import Scraper
+from bot import GRADE_DATA_FILE, get_scraper
 from scrapers.base import GradeData
 
 
@@ -22,8 +21,8 @@ def query(update: Update, context: CallbackContext):
 
     except FileNotFoundError:
         # If not, access server to update it
-        nwpu_client = Scraper()
-        grades = nwpu_client.request_grade()
+        client = get_scraper()
+        grades = client.request_grade()
         grade_data = GradeData(courses=grades)
         grade_data.save(GRADE_DATA_FILE)
 
