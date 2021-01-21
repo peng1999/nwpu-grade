@@ -36,6 +36,15 @@ def build_menu(buttons, n_cols, header_buttons=None, footer_buttons=None):
     return menu
 
 
+def to_callback_data(prefix, data):
+    return f'{prefix}:{data}'
+
+
+def from_callback_data(data: str):
+    _, _, data = data.partition(':')
+    return data
+
+
 def print_courses(courses: List[GradeItem], *, avg_by_year=True, avg_all=True):
     if avg_by_year and not avg_all:
         raise ValueError('avg_all should be True when avg_by_year is True')
