@@ -72,6 +72,7 @@ class Scraper(ScraperBase):
             logging.warning(f'cannot find grades')
             logging.warning(f'history: {r.history}')
             logging.warning(f'url: {r.url}')
+            logging.warning(f'status: {r.status_code}')
             logging.warning(f'text: {r.text}')
 
         grades = [
