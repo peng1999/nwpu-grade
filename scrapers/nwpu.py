@@ -62,12 +62,17 @@ class Scraper(ScraperBase):
         r = None
         if self.cookies is not None:
             r = self.get_data()
-        while r is None:
+        if r is None:
             logging.info('account info absent or expired, login...')
             self.login()
             r = self.get_data()
         tree = etree.HTML(r.text)
         trs = tree.cssselect("div.grid table tbody tr")
+        if len(trs) == 0:
+            logging.warning(f'cannot find grades')
+            logging.warning(f'history: {r.history}')
+            logging.warning(f'url: {r.url}')
+            logging.warning(f'text: {r.text}')
 
         grades = [
             NWPUGradeItem(

@@ -23,6 +23,9 @@ def query_diff():
         return []
 
     grades = get_scraper().request_grade()
+    if len(grades) == 0:
+        raise ValueError('grade list is null, skipped')
+
     new_grade_data = GradeData(courses=grades)
     new_grade_data.save(GRADE_DATA_FILE)
 
@@ -40,7 +43,7 @@ def listen_loop(chat_id: int):
         grades = get_scraper().request_grade()
         GradeData(courses=grades).save(GRADE_DATA_FILE)
     except Exception as e:
-        logging.error(e)
+        logging.error(f'{type(e)}: {e}')
         updater.bot.send_message(chat_id, '初始状态获取失败，程序可能不能正确运行！')
 
     while not stop_flag.wait(timeout=wait_time):
@@ -58,7 +61,7 @@ def listen_loop(chat_id: int):
                 msg += '，'.join([course.course_name for course in redraw])
                 updater.bot.send_message(chat_id, msg)
         except Exception as e:
-            logging.error(e)
+            logging.error(f'{type(e)}: {e}')
 
     logging.info('background thread stopped')
     updater.bot.send_message(chat_id, '已停止监视！')
