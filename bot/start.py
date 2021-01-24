@@ -3,6 +3,7 @@ import logging
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import CallbackContext, ConversationHandler
 
+import config
 import scrapers
 from bot.util import build_menu
 from db import User
@@ -16,7 +17,8 @@ def start(update: Update, context: CallbackContext):
         logging.info(f'username is `{username}`')
 
     update.effective_chat.send_message(f'Hello {update.effective_user.full_name}，'
-                                       f'欢迎使用大学成绩提醒器！')
+                                       f'欢迎使用大学成绩提醒器！\n'
+                                       f'{config.disclaimer}')
 
     markup = ReplyKeyboardMarkup(build_menu(scrapers.universities, 2), resize_keyboard=True)
     update.effective_chat.send_message('请选择你的学校', reply_markup=markup)

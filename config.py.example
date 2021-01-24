@@ -17,3 +17,6 @@ allow_user = "username or user_id"
 data_path = "."
 # 两次查询时间的间隔（秒）
 interval = 30 * 60
+
+disclaimer = '为了查询成绩，你需要提供登录信息。在使用本服务之前请确定对服务提供者的信任。' \
+             '取消会话请使用 /cancel'
