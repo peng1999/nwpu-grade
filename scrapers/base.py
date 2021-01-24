@@ -1,33 +1,12 @@
 import abc
-import getpass
 import json
 import logging
-import sys
 from collections import OrderedDict
 from base64 import b64encode, b64decode
 from datetime import datetime
 from typing import List, Dict
 
 from pydantic import Field, BaseModel
-
-try:
-    # noinspection PyUnresolvedReferences
-    import config
-except ImportError:
-    pass
-
-
-def get_config(name: str, passwd=False):
-    if 'config' in globals() and hasattr(config, name):
-        return getattr(config, name)
-
-    if sys.argv[0].endswith('bot.py'):
-        raise ValueError(f'Missing configuration `{name}`')
-
-    prompt = name + ': '
-    if passwd:
-        return getpass.getpass(prompt)
-    return input(prompt)
 
 
 class ConfigBase(BaseModel):
@@ -42,11 +21,11 @@ class ConfigBase(BaseModel):
                 if not required or fields[name].required}
 
     def base64(self):
-        return b64encode(self.json())
+        return b64encode(self.json().encode('utf-8'))
 
     @classmethod
     def parse_base64(cls, text):
-        return cls(**json.loads(b64decode(text)))
+        return cls(**json.loads(b64decode(text).decode('utf-8')))
 
 
 class GradeItem(BaseModel):
@@ -94,6 +73,8 @@ def courses_by_semester(grades: List[GradeItem], semester: str):
 
 
 class ScraperBase(abc.ABC):
+    config: ConfigBase
+
     @abc.abstractmethod
     def request_grade(self) -> List[GradeItem]:
         ...

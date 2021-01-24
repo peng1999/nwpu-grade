@@ -4,12 +4,8 @@ from glob import glob
 from os import path
 from typing import Any, Type
 
-from .base import ScraperBase, get_config, ConfigBase
-
-# TODO: delete this
-mode = get_config('university')
-cur_module: Any = importlib.import_module(f'{__name__}.{mode}')
-Scraper: Type[ScraperBase] = cur_module.Scraper
+from db import User
+from .base import ScraperBase, ConfigBase
 
 universities = [
     path.basename(f)[:-3]
@@ -29,7 +25,16 @@ def get_config_cls(name) -> Type[ConfigBase]:
     return get_module(name).Config
 
 
+def get_user_config(user_id):
+    user: User = User.get(user_id=user_id)
+    config_cls = get_config_cls(user.university)
+    config = config_cls.parse_base64(user.config)
+    return config
+
+
 @lru_cache(maxsize=100)
-def get_scraper():
+def get_scraper(user_id) -> ScraperBase:
     """Scraper factory"""
-    return Scraper()
+    user: User = User.get(user_id=user_id)
+    config = get_user_config(user_id)
+    return get_module(user.university).Scraper(config)

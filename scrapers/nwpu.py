@@ -6,7 +6,6 @@ from lxml import etree
 from pydantic import Field
 from requests.cookies import RequestsCookieJar
 
-from . import get_config
 from .base import GradeItem, ScraperBase, DetailedItem, ConfigBase
 
 
@@ -46,13 +45,14 @@ class Scraper(ScraperBase):
     GRADE_URL = "http://us.nwpu.edu.cn/eams/teach/grade/course/person!historyCourseGrade.action" \
                 "?projectType=MAJOR"
 
-    def __init__(self):
+    def __init__(self, config):
         self.cookies: Optional[RequestsCookieJar] = None
-        self.username = get_config('username')
-        self.password = get_config('password', passwd=True)
+
+        assert isinstance(config, Config)
+        self.config: Config = config
 
     def login(self):
-        login_data = {'username': self.username, 'password': self.password}
+        login_data = {'username': self.config.username, 'password': self.config.password}
         r = requests.post(self.LOGIN_URL, data=login_data, allow_redirects=False)
         self.cookies = r.cookies
 

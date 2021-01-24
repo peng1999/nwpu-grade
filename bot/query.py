@@ -5,7 +5,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
 
 from bot.util import restricted, build_menu, render_grade, to_callback_data, from_callback_data
-from scrapers import Scraper, get_scraper
+from scrapers import get_scraper
 from scrapers.base import courses_by_semester, semesters, GradeItem, DetailedItem
 
 
@@ -26,12 +26,12 @@ def menu_from_grades(grades: List[GradeItem], detail=None):
 def query(update: Update, context: CallbackContext):
     logging.info(f'/query from user {update.effective_user.id}')
 
-    client = get_scraper()
+    client = get_scraper(update.effective_user.id)
     grades = client.request_grade()
 
     markup = menu_from_grades(grades)
 
-    text = render_grade(grades)
+    text = render_grade(grades, client, by_year=True)
     update.message.reply_text(text, reply_markup=markup, parse_mode='MarkdownV2')
 
 
@@ -41,17 +41,19 @@ def query_button(update: Update, context: CallbackContext):
     logging.info(f'button clicked with data=`{q.data}`')
     data = from_callback_data(q.data)
 
-    client = get_scraper()
+    client = get_scraper(update.effective_user.id)
     grades = client.request_grade()
 
     if data == 'all':
         courses = grades
         markup = menu_from_grades(grades)
+        by_year = True
     else:
         courses = courses_by_semester(grades, data)
         markup = menu_from_grades(grades, detail=data)
+        by_year = False
 
-    text = render_grade(courses)
+    text = render_grade(courses, client, by_year)
     q.answer()
     # bypass the exception raised when text not change
     if text.strip() != update.effective_message.text_markdown_v2.strip():
@@ -66,7 +68,7 @@ def detail_button(update: Update, context: CallbackContext):
     q.answer()
     data = from_callback_data(q.data)
 
-    client = get_scraper()
+    client = get_scraper(update.effective_user.id)
     grades = client.request_grade()
     courses = courses_by_semester(grades, data)
 
@@ -89,13 +91,13 @@ def detail_item_button(update: Update, context: CallbackContext):
     q.answer()
     data = from_callback_data(q.data)
 
-    client = get_scraper()
+    client = get_scraper(update.effective_user.id)
     grades = client.request_grade()
 
     text = ''
     for c in grades:
         if c.course_id == data:
-            msg = [Scraper.fmt_grades([c])]
+            msg = [client.fmt_grades([c])]
             if isinstance(c, DetailedItem):
                 msg.append(c.fmt_detail())
             text = '\n'.join(msg)

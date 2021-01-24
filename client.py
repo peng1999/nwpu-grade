@@ -1,10 +1,10 @@
 #!/usr/bin/python3
 
-from scrapers import Scraper
+from config import get_scraper
 
 
 def main():
-    scraper = Scraper()
+    scraper = get_scraper()
     grades = scraper.request_grade()
 
     print('\n'.join([

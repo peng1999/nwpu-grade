@@ -1,7 +1,6 @@
 import requests
 from pydantic import Field
 
-from . import get_config
 from .base import GradeItem, ScraperBase, ConfigBase
 
 
@@ -13,9 +12,9 @@ class Config(ConfigBase):
 class Scraper(ScraperBase):
     GRADE_URL = "https://app.buaa.edu.cn/buaascore/wap/default/index"
 
-    def __init__(self):
-        self.cookie = get_config('cookie')
-        self.data = get_config('data')
+    def __init__(self, config):
+        assert isinstance(config, Config)
+        self.config: Config = config
 
     def request_grade(self):
         headers = {
@@ -25,10 +24,10 @@ class Scraper(ScraperBase):
                           'Safari/537.36',
             'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
             'Origin': 'https://app.buaa.edu.cn',
-            'Cookie': self.cookie,
+            'Cookie': self.config.cookie,
         }
 
-        r = requests.post(self.GRADE_URL, data=self.data, headers=headers)
+        r = requests.post(self.GRADE_URL, data=self.config.data, headers=headers)
         json_list = r.json()['d']
         grades = [
             GradeItem(

@@ -30,10 +30,10 @@ dispatcher.add_handler(ConversationHandler(
 dispatcher.add_handler(CommandHandler('help', help_text))
 
 # query
-# dispatcher.add_handler(CommandHandler('query', query))
-# dispatcher.add_handler(CallbackQueryHandler(query_button, pattern='query/list'))
-# dispatcher.add_handler(CallbackQueryHandler(detail_button, pattern='query/detail'))
-# dispatcher.add_handler(CallbackQueryHandler(detail_item_button, pattern='query/single'))
+dispatcher.add_handler(CommandHandler('query', query))
+dispatcher.add_handler(CallbackQueryHandler(query_button, pattern='query/list'))
+dispatcher.add_handler(CallbackQueryHandler(detail_button, pattern='query/detail'))
+dispatcher.add_handler(CallbackQueryHandler(detail_item_button, pattern='query/single'))
 
 # monitor
 # dispatcher.add_handler(CommandHandler('start_monitor', start_monitor))

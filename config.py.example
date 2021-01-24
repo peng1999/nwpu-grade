@@ -1,22 +1,13 @@
-# 选择学校
-university = 'buaa|nwpu'
-
-# NWPU设置
-username = "xxxxxxxxxx"  #  学号
-password = "xxxxxxxxxx"  #  密码
-
-# BUAA设置
-cookie = "xxxxxxxxx"  # 登录 Cookie
-data = "xq=1&year=2020-2021"  # 查询的学期
+# 用于 client.py 的测试配置
+# def get_scraper():
+#     from scrapers.<university> import Config, Scraper
+#     scraper = Scraper(Config(username=xxx, password=xxx, ...))
+#     return scraper
 
 # 访问 https://t.me/BotFather 以获取
 token = "Telegram Bot Token"
-# 在 Profile 中设置你的 Username，或从 https://t.me/myidbot 获取 user_id
-allow_user = "username or user_id"
-# 临时文件的储存位置，默认为当前目录
-data_path = "."
-# 两次查询时间的间隔（秒）
-interval = 30 * 60
-
+# 数据库的存放位置
+db = 'app.db'
+# 免责信息
 disclaimer = '为了查询成绩，你需要提供登录信息。在使用本服务之前请确定对服务提供者的信任。' \
              '取消会话请使用 /cancel'

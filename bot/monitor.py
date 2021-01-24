@@ -5,8 +5,7 @@ from datetime import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
 
-import config
-from bot.util import print_courses, restricted
+from bot.util import restricted
 from bot import GRADE_DATA_FILE, updater
 from scrapers import get_scraper
 from scrapers.base import GradeData, diff_courses
@@ -15,7 +14,7 @@ stop_flag = threading.Event()  # background thread is running when not set
 stop_flag.set()
 
 
-def query_diff():
+def query_diff(user_id):
     logging.info('querying diff')
 
     try:
@@ -23,7 +22,7 @@ def query_diff():
     except FileNotFoundError:
         return []
 
-    grades = get_scraper().request_grade()
+    grades = get_scraper(user_id).request_grade()
     if len(grades) == 0:
         raise ValueError('grade list is null, skipped')
 
@@ -34,38 +33,35 @@ def query_diff():
             diff_courses(grade_data.courses, new_grade_data.courses))
 
 
-def listen_loop(chat_id: int):
-    try:
-        wait_time = config.interval
-    except AttributeError:
-        wait_time = 30 * 60
+def listen_loop(user_id: int):
+    scraper = get_scraper(user_id)
 
     try:
-        grades = get_scraper().request_grade()
+        grades = scraper.request_grade()
         GradeData(courses=grades).save(GRADE_DATA_FILE)
     except Exception as e:
         logging.error(f'{type(e)}: {e}')
-        updater.bot.send_message(chat_id, '初始状态获取失败，程序可能不能正确运行！')
+        updater.bot.send_message(user_id, '初始状态获取失败，程序可能不能正确运行！')
 
-    while not stop_flag.wait(timeout=wait_time):
+    while not stop_flag.wait(timeout=scraper.config.interval):
         try:
             # everyone is sleeping during this time, so don't update
             if 3 <= datetime.now().hour < 7:
                 continue
-            diff, redraw = query_diff()
+            diff, redraw = query_diff(user_id)
             if len(diff) > 0:
                 msg = '有新的成绩！\n\n'
-                msg += print_courses(diff, avg_all=False, avg_by_year=False)
-                updater.bot.send_message(chat_id, msg)
+                msg += scraper.fmt_grades(diff)
+                updater.bot.send_message(user_id, msg)
             if len(redraw) > 0:
                 msg = '有成绩被撤回：\n\n'
                 msg += '，'.join([course.course_name for course in redraw])
-                updater.bot.send_message(chat_id, msg)
+                updater.bot.send_message(user_id, msg)
         except Exception as e:
             logging.error(f'{type(e)}: {e}')
 
     logging.info('background thread stopped')
-    updater.bot.send_message(chat_id, '已停止监视！')
+    updater.bot.send_message(user_id, '已停止监视！')
 
 
 @restricted
@@ -76,7 +72,7 @@ def start_monitor(update: Update, context: CallbackContext):
     stop_flag.clear()
 
     background_thread = threading.Thread(name='background', target=listen_loop,
-                                         args=(update.effective_chat.id,))
+                                         args=(update.effective_user.id,))
     background_thread.daemon = True
     background_thread.start()
     update.effective_chat.send_message('开始监视新的成绩！')

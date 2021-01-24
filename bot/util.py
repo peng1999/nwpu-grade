@@ -7,8 +7,7 @@ from telegram import Update
 from telegram.utils.helpers import escape_markdown
 
 from db import User
-from scrapers import Scraper
-from scrapers.base import GradeItem
+from scrapers.base import GradeItem, ScraperBase
 
 
 def restricted(func):
@@ -48,22 +47,10 @@ def from_callback_data(data: str):
     return data
 
 
-def print_courses(courses: List[GradeItem], *, avg_by_year=True, avg_all=True):
-    if avg_by_year and not avg_all:
-        raise ValueError('avg_all should be True when avg_by_year is True')
-
-    msg = [Scraper.fmt_grades(courses)]
-
-    if avg_by_year or avg_all:
-        msg.append(Scraper.fmt_gpa(courses, by_year=avg_by_year))
-
-    return '\n'.join(msg)
-
-
-def render_grade(courses: List[GradeItem], time: Optional[datetime] = None):
+def render_grade(courses: List[GradeItem], fmt: ScraperBase, by_year=False, time: Optional[datetime] = None):
     if time is None:
         time = datetime.now()
-    text = print_courses(courses, avg_by_year=False)
+    text = '\n'.join([fmt.fmt_grades(courses), fmt.fmt_gpa(courses, by_year=by_year)])
     text = escape_markdown(text, version=2)
     text += f'\n_{time:%F %T}_'.replace('-', '\\-')
     return text
