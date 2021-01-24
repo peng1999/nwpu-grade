@@ -4,6 +4,7 @@ import json
 import logging
 import sys
 from collections import OrderedDict
+from base64 import b64encode, b64decode
 from datetime import datetime
 from typing import List, Dict
 
@@ -39,6 +40,13 @@ class ConfigBase(BaseModel):
         return {name: fields[name].field_info.description
                 for name in fields
                 if not required or fields[name].required}
+
+    def base64(self):
+        return b64encode(self.json())
+
+    @classmethod
+    def parse_base64(cls, text):
+        return cls(**json.loads(b64decode(text)))
 
 
 class GradeItem(BaseModel):

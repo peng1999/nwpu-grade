@@ -40,8 +40,8 @@ def prompt_setting(update: Update, context: CallbackContext):
     settings: dict = context.user_data['settings']
     university: str = context.user_data['university']
 
-    config = get_config_cls(university)
-    required_settings = config.get_key_name(required=True)
+    config_cls = get_config_cls(university)
+    required_settings = config_cls.get_key_name(required=True)
 
     for k in required_settings:
         if k in settings:
@@ -51,11 +51,11 @@ def prompt_setting(update: Update, context: CallbackContext):
             context.user_data['cur_setting'] = k
             return 'settings'
 
-    new_config = config(**settings)
+    new_config = config_cls(**settings)
     user, _ = User.get_or_create(user_id=update.effective_user.id)
     user.chat_id = update.effective_chat.id
     user.university = university
-    user.config = new_config.json()
+    user.config = new_config.base64()
     user.save()
 
     update.effective_chat.send_message('设置成功！')
