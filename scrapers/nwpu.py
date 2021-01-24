@@ -3,10 +3,16 @@ from typing import Optional
 
 import requests
 from lxml import etree
+from pydantic import Field
 from requests.cookies import RequestsCookieJar
 
 from . import get_config
-from .base import GradeItem, ScraperBase, DetailedItem
+from .base import GradeItem, ScraperBase, DetailedItem, ConfigBase
+
+
+class Config(ConfigBase):
+    username: str = Field(description='用户名')
+    password: str = Field(description='密码')
 
 
 class NWPUGradeItem(GradeItem, DetailedItem):

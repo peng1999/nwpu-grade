@@ -7,7 +7,8 @@ from telegram.ext import CallbackContext
 
 import config
 from bot.util import print_courses, restricted
-from bot import GRADE_DATA_FILE, updater, get_scraper
+from bot import GRADE_DATA_FILE, updater
+from scrapers import get_scraper
 from scrapers.base import GradeData, diff_courses
 
 stop_flag = threading.Event()  # background thread is running when not set

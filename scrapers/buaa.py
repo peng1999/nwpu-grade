@@ -1,7 +1,13 @@
 import requests
+from pydantic import Field
 
 from . import get_config
-from .base import GradeItem, ScraperBase
+from .base import GradeItem, ScraperBase, ConfigBase
+
+
+class Config(ConfigBase):
+    cookie: str = Field(description='用于登录的 Cookie')
+    data: str = Field(description='查询的学期（例如`xq=1&year=2020-2021`）')
 
 
 class Scraper(ScraperBase):

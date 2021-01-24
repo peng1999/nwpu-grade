@@ -1,12 +1,12 @@
-import logging
 from datetime import datetime
 from functools import wraps
 from typing import List, Optional
 
+from peewee import fn
 from telegram import Update
 from telegram.utils.helpers import escape_markdown
 
-import config
+from db import User
 from scrapers import Scraper
 from scrapers.base import GradeItem
 
@@ -15,12 +15,15 @@ def restricted(func):
     @wraps(func)
     def wrapped(update: Update, context, *args, **kwargs):
         user_id = update.effective_user.id
-        username = update.effective_user.username
-        if int(user_id) != config.allow_user and username != config.allow_user:
-            logging.warning(f'Unauthorized access denied for {user_id} `{username}`.')
+
+        is_in_list = (User
+                      .select(fn.COUNT(User.user_id).alias('count'))
+                      .where(User.user_id == user_id)
+                      .get()
+                      .count) == 1
+        if not is_in_list:
             update.effective_chat.send_message(
-                "I'm not your bot! Refer to https://github.com/peng1999/nwpu-grade to deploy your "
-                "own bot.")
+                "请输入 /start 以开始")
             return
         return func(update, context, *args, **kwargs)
 

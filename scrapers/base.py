@@ -1,11 +1,44 @@
 import abc
+import getpass
 import json
 import logging
+import sys
 from collections import OrderedDict
 from datetime import datetime
-from typing import List
+from typing import List, Dict
 
 from pydantic import Field, BaseModel
+
+try:
+    # noinspection PyUnresolvedReferences
+    import config
+except ImportError:
+    pass
+
+
+def get_config(name: str, passwd=False):
+    if 'config' in globals() and hasattr(config, name):
+        return getattr(config, name)
+
+    if sys.argv[0].endswith('bot.py'):
+        raise ValueError(f'Missing configuration `{name}`')
+
+    prompt = name + ': '
+    if passwd:
+        return getpass.getpass(prompt)
+    return input(prompt)
+
+
+class ConfigBase(BaseModel):
+    interval: int = Field(60 * 60, ge=30 * 60, description='查询间隔（至少1800秒）')
+
+    @classmethod
+    def get_key_name(cls, *, required=False) -> Dict[str, str]:
+        """返回一个词典，代表配置项和名称"""
+        fields = cls.__fields__
+        return {name: fields[name].field_info.description
+                for name in fields
+                if not required or fields[name].required}
 
 
 class GradeItem(BaseModel):

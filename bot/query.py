@@ -4,9 +4,8 @@ from typing import List
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
 
-from bot import get_scraper
 from bot.util import restricted, build_menu, render_grade, to_callback_data, from_callback_data
-from scrapers import Scraper
+from scrapers import Scraper, get_scraper
 from scrapers.base import courses_by_semester, semesters, GradeItem, DetailedItem
 
 

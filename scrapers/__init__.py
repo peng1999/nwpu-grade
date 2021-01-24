@@ -1,30 +1,35 @@
-import getpass
 import importlib
-import sys
+from functools import lru_cache
+from glob import glob
+from os import path
 from typing import Any, Type
 
-from .base import ScraperBase
+from .base import ScraperBase, get_config, ConfigBase
 
-try:
-    # noinspection PyUnresolvedReferences
-    import config
-except ImportError:
-    pass
-
-
-def get_config(name: str, passwd=False):
-    if 'config' in globals() and hasattr(config, name):
-        return getattr(config, name)
-
-    if sys.argv[0].endswith('bot.py'):
-        raise ValueError(f'Missing configuration `{name}`')
-
-    prompt = name + ': '
-    if passwd:
-        return getpass.getpass(prompt)
-    return input(prompt)
-
-
+# TODO: delete this
 mode = get_config('university')
 cur_module: Any = importlib.import_module(f'{__name__}.{mode}')
 Scraper: Type[ScraperBase] = cur_module.Scraper
+
+universities = [
+    path.basename(f)[:-3]
+    for f in glob(path.join(path.dirname(__file__), '*.py'))
+]
+universities.remove('__init__')
+universities.remove('base')
+
+
+@lru_cache()
+def get_module(name) -> Any:
+    return importlib.import_module(f'{__name__}.{name}')
+
+
+@lru_cache()
+def get_config_cls(name) -> Type[ConfigBase]:
+    return get_module(name).Config
+
+
+@lru_cache(maxsize=100)
+def get_scraper():
+    """Scraper factory"""
+    return Scraper()
