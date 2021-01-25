@@ -10,6 +10,8 @@ from pydantic import Field, BaseModel
 
 from db import User
 
+logger = logging.getLogger(__name__)
+
 
 class B64BaseModel(BaseModel):
 
@@ -51,7 +53,7 @@ class GradeData(B64BaseModel):
         return cls.parse_base64(user.data)
 
     def save(self, user_id):
-        logging.info(f'updating data of {user_id}')
+        logger.info(f'updating data of {user_id}')
         user: User = User.get(user_id=user_id)
         user.data = self.base64()
         user.save()

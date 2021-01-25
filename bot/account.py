@@ -11,12 +11,14 @@ from bot.util import build_menu, restricted
 from db import User
 from scrapers import get_config_cls
 
+logger = logging.getLogger(__name__)
+
 
 def start(update: Update, context: CallbackContext):
-    logging.info(f'/start from user {update.effective_user.id}')
+    logger.info(f'/start from user {update.effective_user.id}')
     username = update.effective_user.username
     if username is not None:
-        logging.info(f'username is `{username}`')
+        logger.info(f'username is `{username}`')
 
     update.effective_chat.send_message(f'Hello {update.effective_user.full_name}，'
                                        f'欢迎使用大学成绩提醒器！\n'
@@ -76,6 +78,6 @@ def settings_answer(update: Update, context: CallbackContext):
 def forget_me(update: Update, context: CallbackContext):
     monitor.stop_monitor(update, context, interactive=False)
     user: User = User.get(user_id=update.effective_user.id)
-    logging.info(f'deleting user `{user.user_id}`')
+    logger.info(f'deleting user `{user.user_id}`')
     user.delete_instance()
     update.effective_chat.send_message('删除成功！使用 /start 以重新开始')

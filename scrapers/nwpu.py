@@ -8,6 +8,8 @@ from requests.cookies import RequestsCookieJar
 
 from .base import GradeItem, ScraperBase, DetailedItem, ConfigBase
 
+logger = logging.getLogger(__name__)
+
 
 class Config(ConfigBase):
     username: str = Field(description='用户名')
@@ -68,12 +70,12 @@ class Scraper(ScraperBase):
             return r
 
     def request_grade(self):
-        logging.info('access us.nwpu.edu.cn to query grades...')
+        logger.info('access us.nwpu.edu.cn to query grades...')
         r = None
         if self.cookies is not None:
             r = self.get_data()
         if r is None:
-            logging.info('account info absent or expired, login...')
+            logger.info('account info absent or expired, login...')
             self.login()
             r = self.get_data()
         if r is None:
@@ -81,11 +83,11 @@ class Scraper(ScraperBase):
         tree = etree.HTML(r.text)
         trs = tree.cssselect("div.grid table tbody tr")
         if len(trs) == 0:
-            logging.warning(f'cannot find grades')
-            logging.warning(f'history: {r.history}')
-            logging.warning(f'url: {r.url}')
-            logging.warning(f'status: {r.status_code}')
-            logging.warning(f'text: {r.text}')
+            logger.warning(f'cannot find grades')
+            logger.warning(f'history: {r.history}')
+            logger.warning(f'url: {r.url}')
+            logger.warning(f'status: {r.status_code}')
+            logger.warning(f'text: {r.text}')
 
         grades = [
             NWPUGradeItem(

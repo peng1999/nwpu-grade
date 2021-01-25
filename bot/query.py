@@ -8,6 +8,8 @@ from bot.util import restricted, build_menu, render_grade, to_callback_data, fro
 from scrapers import get_scraper
 from scrapers.base import courses_by_semester, semesters, GradeItem, DetailedItem
 
+logger = logging.getLogger(__name__)
+
 
 def menu_from_grades(grades: List[GradeItem], detail=None):
     semester = semesters(grades)
@@ -24,7 +26,7 @@ def menu_from_grades(grades: List[GradeItem], detail=None):
 
 @restricted
 def query(update: Update, context: CallbackContext):
-    logging.info(f'/query from user {update.effective_user.id}')
+    logger.info(f'/query from user {update.effective_user.id}')
 
     client = get_scraper(update.effective_user.id)
     grades = client.request_grade()
@@ -38,7 +40,7 @@ def query(update: Update, context: CallbackContext):
 @restricted
 def query_button(update: Update, context: CallbackContext):
     q = update.callback_query
-    logging.info(f'button clicked with data=`{q.data}`')
+    logger.info(f'button clicked with data=`{q.data}`')
     data = from_callback_data(q.data)
 
     client = get_scraper(update.effective_user.id)

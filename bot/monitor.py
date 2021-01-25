@@ -13,9 +13,11 @@ from db import User
 from scrapers import get_scraper, get_user_config
 from scrapers.base import GradeData, diff_courses
 
+logger = logging.getLogger(__name__)
+
 
 def new_stop_flag():
-    logging.info(f'creating stop_flag')
+    logger.info(f'creating stop_flag')
     stop_flag = threading.Event()  # background thread is running when not set
     stop_flag.set()
     return stop_flag
@@ -29,7 +31,7 @@ def get_stop_flag(user_id):
 
 
 def query_diff(user_id):
-    logging.info('querying diff')
+    logger.info('querying diff')
 
     try:
         grade_data = GradeData.load(user_id)
@@ -65,9 +67,9 @@ def listen_loop(user_id: int):
                 msg += '，'.join([course.course_name for course in redraw])
                 updater.bot.send_message(user_id, msg)
         except Exception as e:
-            logging.error(f'{type(e)}: {e}')
+            logger.error(f'{type(e)}: {e}')
 
-    logging.info('background thread stopped')
+    logger.info('background thread stopped')
     updater.bot.send_message(user_id, '已停止监视！')
 
 
@@ -86,7 +88,7 @@ def start_monitor(update: Update, context: CallbackContext):
         grades = scraper.request_grade()
         GradeData(courses=grades).save(user_id)
     except Exception as e:
-        logging.error(f'{type(e)}: {e}')
+        logger.error(f'{type(e)}: {e}')
         updater.bot.send_message(user_id, '初始状态获取失败，程序可能不能正确运行！')
 
     user.monitor_running = True
@@ -97,7 +99,7 @@ def start_monitor(update: Update, context: CallbackContext):
     background_thread.daemon = True
     background_thread.start()
     update.effective_chat.send_message('开始监视新的成绩！')
-    logging.info('background thread started')
+    logger.info('background thread started')
 
 
 @restricted
@@ -111,7 +113,7 @@ def stop_monitor(update: Update, context: CallbackContext, *, interactive=True):
             update.effective_chat.send_message('已经停止了!')
         return
 
-    logging.info('stopping background thread...')
+    logger.info('stopping background thread...')
     user.monitor_running = False
     user.save()
     stop_flag.set()
@@ -124,7 +126,7 @@ def resume_all_monitor():
         wait_time = random.randint(0, upper)
         stop_flag = get_stop_flag(user_id)
 
-        logging.info(f'background thread of `{user_id}` will start after {wait_time}s')
+        logger.info(f'background thread of `{user_id}` will start after {wait_time}s')
         t = threading.Timer(interval=wait_time, function=listen_loop, args=(user_id,))
         t.daemon = True
         stop_flag.clear()
@@ -145,7 +147,7 @@ def monitor_status(update: Update, context: CallbackContext):
         grade_data = GradeData.load(user_id)
         text += f'\n{grade_data.time:%F %T}'.replace('-', '\\-')
     except Exception as e:
-        logging.info(f'GradeData load failed with error: {type(e)}: {e}')
+        logger.info(f'GradeData load failed with error: {type(e)}: {e}')
         text += '_Unknown_'
 
     markup = InlineKeyboardMarkup([[InlineKeyboardButton('刷新', callback_data='monitor/status')]])
