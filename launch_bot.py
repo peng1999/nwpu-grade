@@ -6,18 +6,19 @@ from telegram.ext import CommandHandler, CallbackQueryHandler, ConversationHandl
 from bot import updater
 from bot.monitor import start_monitor, stop_monitor, monitor_status
 from bot.query import query, query_button, detail_button, detail_item_button
-from bot.start import start, help_text, cancel, choose_university, settings_answer
+from bot.account import start, help_text, cancel, choose_university, settings_answer, forget_me
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 
 dispatcher = updater.dispatcher
 
-# start
+# account
 start_handler = CommandHandler('start', start)
 cancel_handler = CommandHandler('cancel', cancel)
 university_handler = MessageHandler(Filters.text & (~Filters.command), choose_university)
 settings_handler = MessageHandler(Filters.text & (~Filters.command), settings_answer)
+
 dispatcher.add_handler(ConversationHandler(
     entry_points=[start_handler],
     states={
@@ -27,6 +28,7 @@ dispatcher.add_handler(ConversationHandler(
     fallbacks=[cancel_handler]
 ))
 
+dispatcher.add_handler(CommandHandler('forget_me', forget_me))
 dispatcher.add_handler(CommandHandler('help', help_text))
 
 # query

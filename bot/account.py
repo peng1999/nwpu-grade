@@ -70,6 +70,13 @@ def settings_answer(update: Update, context: CallbackContext):
     return prompt_setting(update, context)
 
 
+def forget_me(update: Update, context: CallbackContext):
+    user: User = User.get(user_id=update.effective_user.id)
+    logging.info(f'deleting user `{user.user_id}`')
+    user.delete_instance()
+    update.effective_chat.send_message('删除成功！使用 /start 以重新开始')
+
+
 def cancel(update: Update, context: CallbackContext):
     markup = ReplyKeyboardRemove()
     update.effective_chat.send_message('Canceled', reply_markup=markup)
@@ -83,5 +90,6 @@ def help_text(update: Update, context: CallbackContext):
 /start_monitor - 开始监视成绩
 /stop_monitor - 停止监视成绩
 /monitor_status - 监视器状态
+/forget_me - 删除帐号信息
 /help - 显示帮助信息
     """)
