@@ -6,6 +6,7 @@ from telegram.ext import CallbackContext, ConversationHandler
 import config
 import scrapers
 from bot import monitor
+from bot.basic import help_text
 from bot.util import build_menu, restricted
 from db import User
 from scrapers import get_config_cls
@@ -78,21 +79,3 @@ def forget_me(update: Update, context: CallbackContext):
     logging.info(f'deleting user `{user.user_id}`')
     user.delete_instance()
     update.effective_chat.send_message('删除成功！使用 /start 以重新开始')
-
-
-def cancel(update: Update, context: CallbackContext):
-    markup = ReplyKeyboardRemove()
-    update.effective_chat.send_message('Canceled', reply_markup=markup)
-    return ConversationHandler.END
-
-
-def help_text(update: Update, context: CallbackContext):
-    update.effective_chat.send_message("""
-/start - 开始
-/query - 查询所有成绩
-/start_monitor - 开始监视成绩
-/stop_monitor - 停止监视成绩
-/monitor_status - 监视器状态
-/forget_me - 删除帐号信息
-/help - 显示帮助信息
-    """)

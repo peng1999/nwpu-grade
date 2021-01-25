@@ -6,7 +6,8 @@ from telegram.ext import CommandHandler, CallbackQueryHandler, ConversationHandl
 from bot import updater
 from bot.monitor import start_monitor, stop_monitor, monitor_status, resume_all_monitor
 from bot.query import query, query_button, detail_button, detail_item_button
-from bot.account import start, help_text, cancel, choose_university, settings_answer, forget_me
+from bot.account import start, choose_university, settings_answer, forget_me
+from bot.basic import cancel, help_text
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)

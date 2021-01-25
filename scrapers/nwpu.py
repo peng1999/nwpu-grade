@@ -40,6 +40,10 @@ def strip_if_not_none(x: Optional[str]):
         return x
 
 
+class LoginFailedError(Exception):
+    pass
+
+
 class Scraper(ScraperBase):
     LOGIN_URL = "http://us.nwpu.edu.cn/eams/login.action"
     GRADE_URL = "http://us.nwpu.edu.cn/eams/teach/grade/course/person!historyCourseGrade.action" \
@@ -72,6 +76,8 @@ class Scraper(ScraperBase):
             logging.info('account info absent or expired, login...')
             self.login()
             r = self.get_data()
+        if r is None:
+            raise LoginFailedError()
         tree = etree.HTML(r.text)
         trs = tree.cssselect("div.grid table tbody tr")
         if len(trs) == 0:
