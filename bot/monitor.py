@@ -1,24 +1,31 @@
 import logging
+import random
 import threading
 from datetime import datetime
+from functools import lru_cache
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
 
 from bot.util import restricted
-from bot import GRADE_DATA_FILE, updater
-from scrapers import get_scraper
+from bot import updater
+from db import User
+from scrapers import get_scraper, get_user_config
 from scrapers.base import GradeData, diff_courses
 
-stop_flag = threading.Event()  # background thread is running when not set
-stop_flag.set()
+
+@lru_cache
+def get_stop_flag(user_id):
+    stop_flag = threading.Event()  # background thread is running when not set
+    stop_flag.set()
+    return stop_flag
 
 
 def query_diff(user_id):
     logging.info('querying diff')
 
     try:
-        grade_data = GradeData.load(GRADE_DATA_FILE)
+        grade_data = GradeData.load(user_id)
     except FileNotFoundError:
         return []
 
@@ -27,7 +34,7 @@ def query_diff(user_id):
         raise ValueError('grade list is null, skipped')
 
     new_grade_data = GradeData(courses=grades)
-    new_grade_data.save(GRADE_DATA_FILE)
+    new_grade_data.save(user_id)
 
     return (diff_courses(new_grade_data.courses, grade_data.courses),
             diff_courses(grade_data.courses, new_grade_data.courses))
@@ -38,12 +45,12 @@ def listen_loop(user_id: int):
 
     try:
         grades = scraper.request_grade()
-        GradeData(courses=grades).save(GRADE_DATA_FILE)
+        GradeData(courses=grades).save(user_id)
     except Exception as e:
         logging.error(f'{type(e)}: {e}')
         updater.bot.send_message(user_id, '初始状态获取失败，程序可能不能正确运行！')
 
-    while not stop_flag.wait(timeout=scraper.config.interval):
+    while not get_stop_flag(user_id).wait(timeout=scraper.config.interval):
         try:
             # everyone is sleeping during this time, so don't update
             if 3 <= datetime.now().hour < 7:
@@ -66,13 +73,20 @@ def listen_loop(user_id: int):
 
 @restricted
 def start_monitor(update: Update, context: CallbackContext):
+    user_id = update.effective_user.id
+    stop_flag = get_stop_flag(user_id)
+    user: User = User.get(user_id=user_id)
+
     if not stop_flag.is_set():
         update.effective_chat.send_message('已经在监视了！')
         return
+
+    user.monitor_running = True
+    user.save()
     stop_flag.clear()
 
     background_thread = threading.Thread(name='background', target=listen_loop,
-                                         args=(update.effective_user.id,))
+                                         args=(user_id,))
     background_thread.daemon = True
     background_thread.start()
     update.effective_chat.send_message('开始监视新的成绩！')
@@ -81,22 +95,44 @@ def start_monitor(update: Update, context: CallbackContext):
 
 @restricted
 def stop_monitor(update: Update, context: CallbackContext):
+    user_id = update.effective_user.id
+    stop_flag = get_stop_flag(user_id)
+    user: User = User.get(user_id=user_id)
+
     if stop_flag.is_set():
-        update.effective_chat.send_message('Already stopped!')
+        update.effective_chat.send_message('已经停止了!')
         return
+
     logging.info('stopping background thread...')
+    user.monitor_running = False
+    user.save()
     stop_flag.set()
+
+
+def resume_all_monitor():
+    for user in User.select().where(User.monitor_running == True):
+        user_id = user.user_id
+        upper = get_user_config(user_id).interval - 1
+        wait_time = random.randint(0, upper)
+        stop_flag = get_stop_flag(user_id)
+
+        logging.info(f'background thread of `{user_id}` will start after {wait_time}s')
+        t = threading.Timer(interval=wait_time, function=listen_loop, args=(user_id,))
+        stop_flag.clear()
+        t.start()
 
 
 @restricted
 def monitor_status(update: Update, context: CallbackContext):
+    user_id = update.effective_user.id
+    stop_flag = get_stop_flag(user_id)
     if stop_flag.is_set():
         text = '*未运行*'
     else:
         text = '*运行中*'
 
     try:
-        grade_data = GradeData.load(GRADE_DATA_FILE)
+        grade_data = GradeData.load(user_id)
         text += f'\n\n最后一次查询时间：\n{grade_data.time:%F %T}'.replace('-', '\\-')
     except FileNotFoundError:
         pass

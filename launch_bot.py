@@ -4,7 +4,7 @@ from telegram.ext import CommandHandler, CallbackQueryHandler, ConversationHandl
     Filters
 
 from bot import updater
-from bot.monitor import start_monitor, stop_monitor, monitor_status
+from bot.monitor import start_monitor, stop_monitor, monitor_status, resume_all_monitor
 from bot.query import query, query_button, detail_button, detail_item_button
 from bot.account import start, help_text, cancel, choose_university, settings_answer, forget_me
 
@@ -38,11 +38,13 @@ dispatcher.add_handler(CallbackQueryHandler(detail_button, pattern='query/detail
 dispatcher.add_handler(CallbackQueryHandler(detail_item_button, pattern='query/single'))
 
 # monitor
-# dispatcher.add_handler(CommandHandler('start_monitor', start_monitor))
-# dispatcher.add_handler(CommandHandler('stop_monitor', stop_monitor))
-# dispatcher.add_handler(CommandHandler('monitor_status', monitor_status))
-# dispatcher.add_handler(CallbackQueryHandler(monitor_status, pattern='monitor/status'))
+dispatcher.add_handler(CommandHandler('start_monitor', start_monitor))
+dispatcher.add_handler(CommandHandler('stop_monitor', stop_monitor))
+dispatcher.add_handler(CommandHandler('monitor_status', monitor_status))
+dispatcher.add_handler(CallbackQueryHandler(monitor_status, pattern='monitor/status'))
 
 updater.start_polling()
+
+resume_all_monitor()
 
 updater.idle()

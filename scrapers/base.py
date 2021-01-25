@@ -8,8 +8,20 @@ from typing import List, Dict
 
 from pydantic import Field, BaseModel
 
+from db import User
 
-class ConfigBase(BaseModel):
+
+class B64BaseModel(BaseModel):
+
+    def base64(self):
+        return b64encode(self.json().encode('utf-8'))
+
+    @classmethod
+    def parse_base64(cls, text: bytes):
+        return cls(**json.loads(b64decode(text).decode('utf-8')))
+
+
+class ConfigBase(B64BaseModel):
     interval: int = Field(60 * 60, ge=30 * 60, description='查询间隔（至少1800秒）')
 
     @classmethod
@@ -20,13 +32,6 @@ class ConfigBase(BaseModel):
                 for name in fields
                 if not required or fields[name].required}
 
-    def base64(self):
-        return b64encode(self.json().encode('utf-8'))
-
-    @classmethod
-    def parse_base64(cls, text):
-        return cls(**json.loads(b64decode(text).decode('utf-8')))
-
 
 class GradeItem(BaseModel):
     semester: str
@@ -36,19 +41,20 @@ class GradeItem(BaseModel):
     credit: str
 
 
-class GradeData(BaseModel):
+class GradeData(B64BaseModel):
     courses: List[GradeItem]
     time: datetime = Field(default_factory=datetime.now)
 
-    @staticmethod
-    def load(filename):
-        with open(filename, 'r') as f:
-            return GradeData(**json.load(f))
+    @classmethod
+    def load(cls, user_id):
+        user: User = User.get(user_id=user_id)
+        return cls.parse_base64(user.data)
 
-    def save(self, filename):
-        logging.info(f'write data to {filename}')
-        with open(filename, 'w') as f:
-            f.write(self.json())
+    def save(self, user_id):
+        logging.info(f'updating data of {user_id}')
+        user: User = User.get(user_id=user_id)
+        user.data = self.base64()
+        user.save()
 
 
 def diff_courses(new: List[GradeItem], old: List[GradeItem]):
