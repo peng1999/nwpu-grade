@@ -1,8 +1,8 @@
 import logging
 import random
 import threading
+from collections import defaultdict
 from datetime import datetime
-from functools import lru_cache
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
@@ -14,11 +14,18 @@ from scrapers import get_scraper, get_user_config
 from scrapers.base import GradeData, diff_courses
 
 
-@lru_cache
-def get_stop_flag(user_id):
+def new_stop_flag():
+    logging.info(f'creating stop_flag')
     stop_flag = threading.Event()  # background thread is running when not set
     stop_flag.set()
     return stop_flag
+
+
+stop_flags = defaultdict(new_stop_flag)
+
+
+def get_stop_flag(user_id):
+    return stop_flags[str(user_id)]
 
 
 def query_diff(user_id):
@@ -42,13 +49,6 @@ def query_diff(user_id):
 
 def listen_loop(user_id: int):
     scraper = get_scraper(user_id)
-
-    try:
-        grades = scraper.request_grade()
-        GradeData(courses=grades).save(user_id)
-    except Exception as e:
-        logging.error(f'{type(e)}: {e}')
-        updater.bot.send_message(user_id, '初始状态获取失败，程序可能不能正确运行！')
 
     while not get_stop_flag(user_id).wait(timeout=scraper.config.interval):
         try:
@@ -81,12 +81,19 @@ def start_monitor(update: Update, context: CallbackContext):
         update.effective_chat.send_message('已经在监视了！')
         return
 
+    scraper = get_scraper(user_id)
+    try:
+        grades = scraper.request_grade()
+        GradeData(courses=grades).save(user_id)
+    except Exception as e:
+        logging.error(f'{type(e)}: {e}')
+        updater.bot.send_message(user_id, '初始状态获取失败，程序可能不能正确运行！')
+
     user.monitor_running = True
     user.save()
     stop_flag.clear()
 
-    background_thread = threading.Thread(name='background', target=listen_loop,
-                                         args=(user_id,))
+    background_thread = threading.Thread(name='background', target=listen_loop, args=(user_id,))
     background_thread.daemon = True
     background_thread.start()
     update.effective_chat.send_message('开始监视新的成绩！')
@@ -94,13 +101,14 @@ def start_monitor(update: Update, context: CallbackContext):
 
 
 @restricted
-def stop_monitor(update: Update, context: CallbackContext):
+def stop_monitor(update: Update, context: CallbackContext, *, interactive=True):
     user_id = update.effective_user.id
     stop_flag = get_stop_flag(user_id)
     user: User = User.get(user_id=user_id)
 
     if stop_flag.is_set():
-        update.effective_chat.send_message('已经停止了!')
+        if interactive:
+            update.effective_chat.send_message('已经停止了!')
         return
 
     logging.info('stopping background thread...')
@@ -118,6 +126,7 @@ def resume_all_monitor():
 
         logging.info(f'background thread of `{user_id}` will start after {wait_time}s')
         t = threading.Timer(interval=wait_time, function=listen_loop, args=(user_id,))
+        t.daemon = True
         stop_flag.clear()
         t.start()
 
@@ -131,11 +140,13 @@ def monitor_status(update: Update, context: CallbackContext):
     else:
         text = '*运行中*'
 
+    text += '\n\n最后一次查询时间：'
     try:
         grade_data = GradeData.load(user_id)
-        text += f'\n\n最后一次查询时间：\n{grade_data.time:%F %T}'.replace('-', '\\-')
-    except FileNotFoundError:
-        pass
+        text += f'\n{grade_data.time:%F %T}'.replace('-', '\\-')
+    except Exception as e:
+        logging.info(f'GradeData load failed with error: {type(e)}: {e}')
+        text += '_Unknown_'
 
     markup = InlineKeyboardMarkup([[InlineKeyboardButton('刷新', callback_data='monitor/status')]])
 

@@ -5,6 +5,7 @@ from telegram.ext import CallbackContext, ConversationHandler
 
 import config
 import scrapers
+from bot import monitor
 from bot.util import build_menu, restricted
 from db import User
 from scrapers import get_config_cls
@@ -72,6 +73,7 @@ def settings_answer(update: Update, context: CallbackContext):
 
 @restricted
 def forget_me(update: Update, context: CallbackContext):
+    monitor.stop_monitor(update, context, interactive=False)
     user: User = User.get(user_id=update.effective_user.id)
     logging.info(f'deleting user `{user.user_id}`')
     user.delete_instance()
