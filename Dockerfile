@@ -19,4 +19,4 @@ RUN apk add --update --no-cache \
     libxml2-dev libxslt-dev \
  && poetry install
 
-CMD poetry run python3 bot.py
+CMD poetry run python3 launch_bot.py
