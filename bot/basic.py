@@ -30,4 +30,5 @@ def error_handler(update: Update, context: CallbackContext):
     if isinstance(context.error, LoginFailedError):
         update.effective_chat.send_message('登录失败！')
 
-    logger.error(msg="Exception while handling an update:", exc_info=context.error)
+    t = type(context.error)
+    logger.error(msg=f'{t.__name__}: {context.error}')
