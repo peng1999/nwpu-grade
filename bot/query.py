@@ -56,18 +56,17 @@ def query_button(update: Update, context: CallbackContext):
         by_year = False
 
     text = render_grade(courses, client, by_year)
-    q.answer()
     # bypass the exception raised when text not change
     if text.strip() != update.effective_message.text_markdown_v2.strip():
         q.edit_message_text(text,
                             reply_markup=markup,
                             parse_mode='MarkdownV2')
+    q.answer()
 
 
 @restricted
 def detail_button(update: Update, context: CallbackContext):
     q = update.callback_query
-    q.answer()
     data = from_callback_data(q.data)
 
     client = get_scraper(update.effective_user.id)
@@ -85,12 +84,12 @@ def detail_button(update: Update, context: CallbackContext):
     markup = InlineKeyboardMarkup(build_menu(button_list, 2))
 
     q.edit_message_text('请选择要查看的课程', reply_markup=markup)
+    q.answer()
 
 
 @restricted
 def detail_item_button(update: Update, context: CallbackContext):
     q = update.callback_query
-    q.answer()
     data = from_callback_data(q.data)
 
     client = get_scraper(update.effective_user.id)
@@ -106,3 +105,4 @@ def detail_item_button(update: Update, context: CallbackContext):
             break
 
     q.edit_message_text(text, reply_markup=update.effective_message.reply_markup)
+    q.answer()

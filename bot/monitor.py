@@ -154,8 +154,8 @@ def monitor_status(update: Update, context: CallbackContext):
 
     q = update.callback_query
     if q is not None:
-        q.answer()
         if text.strip() != update.effective_message.text_markdown_v2.strip():
             q.edit_message_text(text, reply_markup=markup, parse_mode='MarkdownV2')
+        q.answer()
     else:
         update.message.reply_text(text, reply_markup=markup, parse_mode='MarkdownV2')
