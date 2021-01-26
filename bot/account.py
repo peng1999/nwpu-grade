@@ -57,10 +57,12 @@ def prompt_setting(update: Update, context: CallbackContext):
 
     new_config = config_cls(**settings)
     user, _ = User.get_or_create(user_id=update.effective_user.id)
-    user.chat_id = update.effective_chat.id
-    user.university = university
-    user.config = new_config.base64()
-    user.save()
+    query = User.update(
+        chat_id=update.effective_chat.id,
+        university=university,
+        config=new_config.base64(),
+    ).where(User.user_id == user.user_id)
+    query.execute()
 
     update.effective_chat.send_message('设置成功！')
     help_text(update, context)

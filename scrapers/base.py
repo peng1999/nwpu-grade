@@ -54,9 +54,8 @@ class GradeData(B64BaseModel):
 
     def save(self, user_id):
         logger.info(f'updating data of {user_id}')
-        user: User = User.get(user_id=user_id)
-        user.data = self.base64()
-        user.save()
+        query = User.update(data=self.base64()).where(User.user_id == user_id)
+        query.execute()
 
 
 def diff_courses(new: List[GradeItem], old: List[GradeItem]):

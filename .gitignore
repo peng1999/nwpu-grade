@@ -1,6 +1,6 @@
 config.py
 data.json
-app.db
+*.db
 
 # Jet Brains IDE
 .idea

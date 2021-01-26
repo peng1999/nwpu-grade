@@ -49,10 +49,11 @@ def query_diff(user_id):
             diff_courses(grade_data.courses, new_grade_data.courses))
 
 
-def listen_loop(user_id: int):
+def listen_loop(user_id: int, fist_wait=None):
     scraper = get_scraper(user_id)
+    wait_time = fist_wait or scraper.config.interval
 
-    while not get_stop_flag(user_id).wait(timeout=scraper.config.interval):
+    while not get_stop_flag(user_id).wait(timeout=wait_time):
         try:
             # everyone is sleeping during this time, so don't update
             if 3 <= datetime.now().hour < 7:
@@ -68,6 +69,7 @@ def listen_loop(user_id: int):
                 updater.bot.send_message(user_id, msg)
         except Exception as e:
             logger.error(f'{type(e)}: {e}')
+        wait_time = scraper.config.interval
 
     logger.info('background thread stopped')
     updater.bot.send_message(user_id, '已停止监视！')
@@ -77,7 +79,6 @@ def listen_loop(user_id: int):
 def start_monitor(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     stop_flag = get_stop_flag(user_id)
-    user: User = User.get(user_id=user_id)
 
     if not stop_flag.is_set():
         update.effective_chat.send_message('已经在监视了！')
@@ -91,8 +92,8 @@ def start_monitor(update: Update, context: CallbackContext):
         logger.error(f'{type(e)}: {e}')
         updater.bot.send_message(user_id, '初始状态获取失败，程序可能不能正确运行！')
 
-    user.monitor_running = True
-    user.save()
+    query = User.update(monitor_running=True).where(User.user_id == user_id)
+    query.execute()
     stop_flag.clear()
 
     background_thread = threading.Thread(name='background', target=listen_loop, args=(user_id,))
@@ -106,7 +107,6 @@ def start_monitor(update: Update, context: CallbackContext):
 def stop_monitor(update: Update, context: CallbackContext, *, interactive=True):
     user_id = update.effective_user.id
     stop_flag = get_stop_flag(user_id)
-    user: User = User.get(user_id=user_id)
 
     if stop_flag.is_set():
         if interactive:
@@ -114,8 +114,8 @@ def stop_monitor(update: Update, context: CallbackContext, *, interactive=True):
         return
 
     logger.info('stopping background thread...')
-    user.monitor_running = False
-    user.save()
+    query = User.update(monitor_running=False).where(User.user_id == user_id)
+    query.execute()
     stop_flag.set()
 
 
@@ -127,7 +127,7 @@ def resume_all_monitor():
         stop_flag = get_stop_flag(user_id)
 
         logger.info(f'background thread of `{user_id}` will start after {wait_time}s')
-        t = threading.Timer(interval=wait_time, function=listen_loop, args=(user_id,))
+        t = threading.Thread(name='background', target=listen_loop, args=(user_id, wait_time))
         t.daemon = True
         stop_flag.clear()
         t.start()
