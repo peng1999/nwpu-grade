@@ -15,12 +15,12 @@ universities.remove('__init__')
 universities.remove('base')
 
 
-@lru_cache()
+@lru_cache(maxsize=None)
 def get_module(name) -> Any:
     return importlib.import_module(f'{__name__}.{name}')
 
 
-@lru_cache()
+@lru_cache(maxsize=None)
 def get_config_cls(name) -> Type[ConfigBase]:
     return get_module(name).Config
 
@@ -30,6 +30,11 @@ def get_user_config(user_id):
     config_cls = get_config_cls(user.university)
     config = config_cls.parse_base64(user.config)
     return config
+
+
+def update_user_config(user_id, config):
+    scraper = get_scraper(user_id)
+    scraper.config = config
 
 
 @lru_cache(maxsize=100)
