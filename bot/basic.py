@@ -14,6 +14,10 @@ def cancel(update: Update, context: CallbackContext):
     return ConversationHandler.END
 
 
+def unsupported_command(update: Update, context: CallbackContext):
+    update.effective_chat.send_message('此处不支持命令！请先用 /cancel 取消会话')
+
+
 def help_text(update: Update, context: CallbackContext):
     update.effective_chat.send_message("""
 /start - 开始

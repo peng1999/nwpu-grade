@@ -32,6 +32,12 @@ def start(update: Update, context: CallbackContext):
 
 def choose_university(update: Update, context: CallbackContext):
     university = update.message.text
+
+    if university not in scrapers.universities:
+        update.effective_chat.send_message(f'不支持{university}！请联系 @pg999w 以支持该学校')
+        update.effective_chat.send_message('请选择你的学校')
+        return
+
     markup = ReplyKeyboardRemove()
     update.effective_chat.send_message(f'你选择了：{university}', reply_markup=markup)
 

@@ -7,7 +7,7 @@ from bot import updater
 from bot.monitor import start_monitor, stop_monitor, monitor_status, resume_all_monitor
 from bot.query import query, query_button, detail_button, detail_item_button
 from bot.account import start, choose_university, settings_answer, forget_me
-from bot.basic import cancel, help_text, error_handler
+from bot.basic import cancel, help_text, error_handler, unsupported_command
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -24,6 +24,7 @@ dispatcher.add_error_handler(error_handler)
 start_handler = CommandHandler('start', start)
 university_handler = MessageHandler(Filters.text & (~Filters.command), choose_university)
 settings_handler = MessageHandler(Filters.text & (~Filters.command), settings_answer)
+unsupported_handler = MessageHandler(Filters.command, unsupported_command)
 
 dispatcher.add_handler(ConversationHandler(
     entry_points=[start_handler],
@@ -31,7 +32,7 @@ dispatcher.add_handler(ConversationHandler(
         'university': [university_handler],
         'settings': [settings_handler],
     },
-    fallbacks=[cancel_handler]
+    fallbacks=[cancel_handler, unsupported_handler]
 ))
 
 dispatcher.add_handler(CommandHandler('forget_me', forget_me))
