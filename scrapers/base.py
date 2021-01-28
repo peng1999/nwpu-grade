@@ -42,6 +42,9 @@ class GradeItem(BaseModel):
     score: str
     credit: str
 
+    class Config:
+        anystr_strip_whitespace = True
+
 
 class GradeData(B64BaseModel):
     courses: List[GradeItem]

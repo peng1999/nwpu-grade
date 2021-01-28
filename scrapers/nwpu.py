@@ -35,13 +35,6 @@ class NWPUGradeItem(GradeItem, DetailedItem):
         return ''.join(texts)
 
 
-def strip_if_not_none(x: Optional[str]):
-    if x is not None:
-        return x.strip()
-    else:
-        return x
-
-
 class LoginFailedError(Exception):
     pass
 
@@ -95,11 +88,11 @@ class Scraper(ScraperBase):
                 course_name=tr[3][0].text,
                 course_id=tr[1].text,
                 credit=tr[5].text,
-                score=tr[10].text.strip(),
-                daily_score=strip_if_not_none(tr[6].text),
-                midterm_score=strip_if_not_none(tr[7].text),
-                exp_score=strip_if_not_none(tr[8].text),
-                test_score=strip_if_not_none(tr[9].text),
+                score=tr[10].text,
+                daily_score=tr[6].text,
+                midterm_score=tr[7].text,
+                exp_score=tr[8].text,
+                test_score=tr[9].text,
             )
             for tr in trs
         ]
