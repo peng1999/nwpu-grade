@@ -1,6 +1,8 @@
 # NWPUgrade
 大学成绩查询/通知 Telegram Bot（现支持西工大和北航）
 
+> [想要支持更多学校？](#多学校支持)
+
 ## 简介
 
 * 再也无需不厌其烦地登陆教务系统查看成绩
@@ -91,6 +93,13 @@ Python 包依赖：
    docker build -t nwpu-grade .
    docker run -d -e HTTPS_PROXY=<your proxy address> --name nwpu-grade nwpu-grade
    ```
+   
+## 多学校支持
+
+> 欢迎提交 PR！
+
+若要增加更多学校，只需在 scrapers 文件夹下面新增一个文件，实现继承于 `ConfigBase` 的 `Config`
+类和继承于 `ScraperBase` 类的 `Scraper` 类即可。请参照 [scrapers.nwpu](./scrapers/nwpu.py) 编写。
 
 ## 测试脚本 client.py
 
