@@ -59,13 +59,13 @@ def listen_loop(user_id: int, fist_wait=None):
             if 3 <= datetime.now().hour < 7:
                 continue
             diff, redraw = query_diff(user_id)
-            if len(diff) > 0:
-                msg = '有新的成绩！\n\n'
-                msg += scraper.fmt_grades(diff)
-                updater.bot.send_message(user_id, msg)
             if len(redraw) > 0:
                 msg = '有成绩被撤回：\n\n'
                 msg += '，'.join([course.course_name for course in redraw])
+                updater.bot.send_message(user_id, msg)
+            if len(diff) > 0:
+                msg = '有新的成绩！\n\n'
+                msg += scraper.fmt_grades(diff)
                 updater.bot.send_message(user_id, msg)
         except Exception as e:
             logger.error(f'{type(e)}: {e}')
