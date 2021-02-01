@@ -6,7 +6,7 @@ from telegram.ext import CallbackContext
 
 from bot.util import restricted, build_menu, render_grade, to_callback_data, from_callback_data
 from scrapers import get_scraper
-from scrapers.base import courses_by_semester, semesters, GradeItem, DetailedItem
+from scrapers.base import courses_by_semester, semesters, GradeItem
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +76,7 @@ def detail_button(update: Update, context: CallbackContext):
     button_list = [
         InlineKeyboardButton(
             c.course_name,
-            callback_data=to_callback_data('query/single', c.course_id))
+            callback_data=to_callback_data('query/single', c.detail_id()))
         for c in courses
     ]
     button_list.append(
@@ -93,16 +93,9 @@ def detail_item_button(update: Update, context: CallbackContext):
     data = from_callback_data(q.data)
 
     client = get_scraper(update.effective_user.id)
-    grades = client.request_grade()
+    grade = client.request_grade_detail(data)
 
-    text = ''
-    for c in grades:
-        if c.course_id == data:
-            msg = [client.fmt_grades([c])]
-            if isinstance(c, DetailedItem):
-                msg.append(c.fmt_detail())
-            text = '\n'.join(msg)
-            break
+    text = client.fmt_grades([grade])
 
     q.edit_message_text(text, reply_markup=update.effective_message.reply_markup)
     q.answer()

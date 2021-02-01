@@ -45,6 +45,16 @@ class GradeItem(BaseModel):
     class Config:
         anystr_strip_whitespace = True
 
+    def __str__(self):
+        return (f'{self.semester}\n'  # 学期
+                f'{self.course_name}\n'  # 课程名称
+                f'学分：{self.credit}\n'  # 学分
+                f'最终成绩：{self.score}\n'  # 成绩
+                )
+
+    def detail_id(self):
+        return self.course_id
+
 
 class GradeData(B64BaseModel):
     courses: List[GradeItem]
@@ -89,6 +99,13 @@ class ScraperBase(abc.ABC):
     def request_grade(self) -> List[GradeItem]:
         ...
 
+    def request_grade_detail(self, detail_id) -> GradeItem:
+        items = self.request_grade()
+        for item in items:
+            if item.detail_id() == detail_id:
+                return item
+        raise ValueError('id not found')
+
     @classmethod
     def avg_by_year(cls, grades: List[GradeItem]):
         total_mark = 0.
@@ -125,17 +142,7 @@ class ScraperBase(abc.ABC):
 
     @classmethod
     def fmt_grades(cls, grades: List[GradeItem]):
-        msg: List[str] = []
-
-        for grade in grades:
-            msg.append(f'\n'
-                       f'{grade.semester}\n'  # 学期
-                       f'{grade.course_name}\n'  # 课程名称
-                       f'学分：{grade.credit}\n'  # 学分
-                       f'最终成绩：{grade.score}\n'  # 成绩
-                       )
-
-        return ''.join(msg)
+        return '\n'.join(str(grade) for grade in grades)
 
     @classmethod
     def fmt_gpa(cls, grades: List[GradeItem], by_year=False):
@@ -150,8 +157,3 @@ class ScraperBase(abc.ABC):
         msg.append(f'总学分绩：{total_gpa}\n')
 
         return ''.join(msg)
-
-
-class DetailedItem(abc.ABC):
-    @abc.abstractmethod
-    def fmt_detail(self) -> str: ...
