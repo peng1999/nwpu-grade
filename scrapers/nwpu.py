@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class Config(ConfigBase):
-    username: str = Field(description='用户名')
+    username: str = Field(description='学号')
     password: str = Field(description='密码')
 
 
