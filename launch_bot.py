@@ -6,7 +6,7 @@ from telegram.ext import CommandHandler, CallbackQueryHandler, ConversationHandl
 from bot import updater
 from bot.monitor import start_monitor, stop_monitor, monitor_status, resume_all_monitor
 from bot.query import query, query_button, detail_button, detail_item_button
-from bot.account import start, choose_university, settings_answer, forget_me
+from bot.account import start, choose_university_button, settings_answer, forget_me
 from bot.basic import cancel, help_text, error_handler, unsupported_command
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -22,7 +22,7 @@ dispatcher.add_error_handler(error_handler)
 
 # account
 start_handler = CommandHandler('start', start)
-university_handler = MessageHandler(Filters.text & (~Filters.command), choose_university)
+university_handler = CallbackQueryHandler(choose_university_button, pattern='start/choose')
 settings_handler = MessageHandler(Filters.text & (~Filters.command), settings_answer)
 unsupported_handler = MessageHandler(Filters.command, unsupported_command)
 

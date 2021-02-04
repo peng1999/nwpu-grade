@@ -1,13 +1,13 @@
 import logging
 
-from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext, ConversationHandler
 
 import config
 import scrapers
 from bot import monitor
 from bot.basic import help_text
-from bot.util import build_menu, restricted
+from bot.util import build_menu, restricted, from_callback_data, to_callback_data
 from db import User
 from scrapers import get_config_cls
 
@@ -24,22 +24,25 @@ def start(update: Update, context: CallbackContext):
                                        f'欢迎使用大学成绩提醒器！\n'
                                        f'{config.disclaimer}')
 
-    markup = ReplyKeyboardMarkup(build_menu(scrapers.universities, 2), resize_keyboard=True)
+    button_list = [InlineKeyboardButton(u, callback_data=to_callback_data('start/choose', u))
+                   for u in scrapers.universities]
+    markup = InlineKeyboardMarkup(build_menu(button_list, 2))
     update.effective_chat.send_message('请选择你的学校', reply_markup=markup)
 
     return 'university'
 
 
-def choose_university(update: Update, context: CallbackContext):
-    university = update.message.text
+def choose_university_button(update: Update, context: CallbackContext):
+    q = update.callback_query
+    university = from_callback_data(q.data)
 
     if university not in scrapers.universities:
         update.effective_chat.send_message(f'不支持{university}！请联系 @pg999w 以支持该学校')
         update.effective_chat.send_message('请选择你的学校')
         return
 
-    markup = ReplyKeyboardRemove()
-    update.effective_chat.send_message(f'你选择了：{university}', reply_markup=markup)
+    q.edit_message_text(f'你选择了：{university}')
+    q.answer()
 
     context.user_data['settings'] = {}
     context.user_data['university'] = university
