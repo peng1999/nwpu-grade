@@ -7,6 +7,7 @@ from datetime import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
 
+import config
 from bot.util import restricted
 from bot import updater
 from db import User
@@ -120,6 +121,12 @@ def stop_monitor(update: Update, context: CallbackContext, *, interactive=True):
 
 
 def resume_all_monitor():
+    try:
+        if not config.resume_monitor:
+            return
+    except AttributeError:
+        logger.warning('config.py 中找不到 resume_monitor 配置项！')
+        pass
     for user in User.select().where(User.monitor_running == True):
         user_id = user.user_id
         upper = get_user_config(user_id).interval - 1

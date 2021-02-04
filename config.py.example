@@ -11,3 +11,5 @@ db = 'app.db'
 # 免责信息
 disclaimer = '为了查询成绩，你需要提供登录信息。在使用本服务之前请确定对服务提供者的信任。' \
              '取消会话请使用 /cancel'
+# 恢复之前的监视器
+resume_monitor = True
