@@ -4,7 +4,7 @@ import logging
 from collections import OrderedDict
 from base64 import b64encode, b64decode
 from datetime import datetime
-from typing import List, Dict
+from typing import List, Dict, Sequence
 
 from pydantic import Field, BaseModel
 
@@ -107,7 +107,7 @@ class ScraperBase(abc.ABC):
         raise ValueError('id not found')
 
     @classmethod
-    def avg_by_year(cls, grades: List[GradeItem]):
+    def avg_by_year(cls, grades: Sequence[GradeItem]):
         total_mark = 0.
         total_credit = 0.
         years = []
@@ -141,11 +141,11 @@ class ScraperBase(abc.ABC):
         return total_gpa, gpa_by_year
 
     @classmethod
-    def fmt_grades(cls, grades: List[GradeItem]):
+    def fmt_grades(cls, grades: Sequence[GradeItem]):
         return '\n'.join(str(grade) for grade in grades)
 
     @classmethod
-    def fmt_gpa(cls, grades: List[GradeItem], by_year=False):
+    def fmt_gpa(cls, grades: Sequence[GradeItem], by_year=False):
         total_gpa, gpa_by_year = cls.avg_by_year(grades)
         msg: List[str] = []
 
