@@ -42,6 +42,14 @@ class Scraper(ScraperBase):
                 "?projectType=MAJOR"
     DETAIL_URL = "http://us.nwpu.edu.cn/eams/teach/grade/course/person!info.action"
 
+    HEADERS = {'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+               'Accept-Encoding': 'gzip, deflate',
+               'Accept-Language': 'zh-CN,en-US;q=0.7,en;q=0.3',
+               'Connection': 'keep-alive',
+               'Host': 'us.nwpu.edu.cn',
+               'Upgrade-Insecure-Requests': '1',
+               'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:88.0) Gecko/20100101 Firefox/88.0'}
+
     def __init__(self, config):
         self.cookies: Optional[RequestsCookieJar] = None
 
@@ -50,7 +58,7 @@ class Scraper(ScraperBase):
 
     def login(self):
         login_data = {'username': self.config.username, 'password': self.config.password}
-        r = requests.post(self.LOGIN_URL, data=login_data, allow_redirects=False)
+        r = requests.post(self.LOGIN_URL, headers=self.HEADERS, data=login_data, allow_redirects=False)
         self.cookies = r.cookies
 
     def request(self, method, url, **kwargs):
@@ -60,18 +68,18 @@ class Scraper(ScraperBase):
 
         r = None
         if self.cookies is not None:
-            r = requests.request(method, url, cookies=self.cookies, **kwargs)
+            r = requests.request(method, url, headers=self.HEADERS, cookies=self.cookies, **kwargs)
         if auth_not_valid(r):
             logger.info('account info absent or expired, login...')
             self.login()
-            r = requests.request(method, url, cookies=self.cookies, **kwargs)
+            r = requests.request(method, url, headers=self.HEADERS, cookies=self.cookies, **kwargs)
         if auth_not_valid(r):
             raise LoginFailedError()
         return r
 
     def request_grade(self):
         logger.info('access us.nwpu.edu.cn to query grades...')
-        r = self.request('GET', self.GRADE_URL)
+        r = self.request('POST', self.GRADE_URL)
         tree = etree.HTML(r.text)
         trs = tree.cssselect("div.grid table tbody tr")
         if len(trs) == 0:
